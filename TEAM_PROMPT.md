@@ -11,7 +11,7 @@ B=https://raw.githubusercontent.com/alonlesh-blip/swing-team/main
 for f in out/latest.json out/prices.json out/catalog.json out/backtest.json config.json engine/paper.py engine/team_run.py RULEBOOK.md; do
   curl -sSf -m 90 -o $(basename $f) $B/$f || echo "FAILED $f"; done
 ```
-If a fetch fails, wait 30 seconds and retry it once. If it still fails, stop: final response is one Hebrew line naming what could not be fetched. Never substitute numbers from anywhere else.
+raw.githubusercontent.com can lag a push by a few minutes. If a fetch fails, wait 30 seconds and retry it once. If it still fails, stop: final response is one Hebrew line naming what could not be fetched. Never substitute numbers from anywhere else.
 
 ## 2. Board state (ArtifactData tool; load it with ToolSearch if it is deferred)
 
@@ -27,7 +27,7 @@ List the collections `team`, `paper` and `engine` of the board with `out_dir` se
 
 ## 4. The seven stations, in this order
 
-**הסורק (scanner).** Starts the day from the table. Shortlist = every table row whose `setups` is not empty, highest score first, at most 10. Rows with only `watch` tags are being watched and are not tradable today. Summary: universe counts, signals per setup, strongest and weakest sectors, what stands out. No opinions.
+**הסורק (scanner).** Starts the day from the table. Shortlist = every table row that has at least one setup which is NOT in `suspended_setups` (the row's `setups` minus its `suspended`), highest score first, at most 10. Rows whose setups are all suspended, and rows with only `watch` tags, are not tradable today: count them in the summary, do not research them. If the shortlist is empty, the news reader, the big-money tracker and the skeptic have nothing to do: give each a one-sentence summary saying so, with `items: []`, and the boss's answer is "אין עסקה היום". Summary: universe counts, signals per setup and how many of them are suspended, strongest and weakest sectors, what stands out. No opinions. `stat` is "<stocks loaded> ← <shortlist size>".
 
 **מתייג הסטאפים (setup tagger).** For each shortlisted row, hold the setup's written rules (SETUP RULES in the briefing) against the row's numbers. Grade A: score at or above `universe.score_p90` and no red flags. Grade B: score at or above `universe.score_median`. Grade C: below the median, or any red flag. One sentence per name on its weakest link. Only the engine decides that a setup exists; the tagger may not add one. Say so if the setup is in `suspended_setups`.
 

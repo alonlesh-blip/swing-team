@@ -94,7 +94,7 @@ button{font:inherit;color:inherit}
 .chip.setup{background:var(--accent-soft);color:var(--accent)}
 .chip.sus{background:var(--sunk);color:var(--muted);text-decoration:line-through;text-decoration-thickness:1px}
 .chip.ok{background:var(--good-soft);color:var(--good-ink)} .chip.no{background:var(--bad-soft);color:var(--bad-ink)} .chip.hm{background:var(--warn-soft);color:var(--warn-ink)}
-.src{font-size:12px;color:var(--muted)} .src a{margin-inline-end:8px}
+.src{font-size:12px;color:var(--muted);margin-top:2px}
 
 /* scanner table */
 .tbl{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
@@ -275,7 +275,7 @@ function viewToday(){
   h+='<section><div class="line" role="group" aria-label="תחנות הצוות">'+STATIONS.map(function(s){var a=A[s[0]]||{};return'<button class="st" data-st="'+s[0]+'" aria-pressed="'+(S.station===s[0])+'"><span class="role">'+s[1]+'</span><span class="job">'+s[2]+'</span><span class="stat">'+esc(a.stat||"–")+'</span></button>'}).join("")+'</div></section>';
   var st=A[S.station]||{},meta=STATIONS.filter(function(s){return s[0]===S.station})[0];
   var items=(st.items||[]).map(function(it){var mid=it.setup?'<span class="chip setup">'+esc(setupName(it.setup))+(it.grade?" · "+esc(it.grade):"")+'</span>':chipV(it.verdict);
-    return'<div class="item"><span class="tk">'+esc(it.t)+'</span><span>'+mid+'</span><span class="txt">'+esc(it.note||"")+(it.earnings?' <span class="mut">דוח: '+dateHe(it.earnings)+'</span>':"")+((it.sources||[]).length?'<div class="src">'+it.sources.map(link).join("")+'</div>':"")+'</span></div>'}).join("");
+    return'<div class="item"><span class="tk">'+esc(it.t)+'</span><span>'+mid+'</span><span class="txt">'+esc(it.note||"")+(it.earnings?' <span class="mut">דוח: '+dateHe(it.earnings)+'</span>':"")+((it.sources||[]).length?'<div class="src">'+it.sources.map(link).join(" · ")+'</div>':"")+'</span></div>'}).join("");
   h+='<section class="card stbody"><h2>'+meta[1]+'</h2><p class="sub">'+esc(st.summary||"אין דיווח מהתחנה הזו בריצה האחרונה.")+'</p>'+(items?'<div class="items">'+items+'</div>':"")+'</section>';
   // table
   var T=L.table||[],appr={};(boss.orders||[]).forEach(function(o){appr[o.t]=1});
@@ -328,7 +328,7 @@ function detail(){
   right+='<div class="kv"><span>דירוג RS <b>'+n(m.rk63,0)+'</b></span><span>נפח יחסי <b>'+n(m.rvol,1)+'</b></span><span>ATR <b>'+n(m.atrp,1,"%")+'</b></span><span>RSI <b>'+n(m.rsi14,0)+'</b></span><span>חודש <b>'+pct(m.ret21)+'</b></span><span>רבעון <b>'+pct(m.ret63)+'</b></span><span>מהשיא השנתי <b>'+pct(m.dist52h)+'</b></span><span>מחזור <b><span class="n">$'+num(m.dv20m,0)+'M</span></b></span>'+
     (m.earn_date?'<span>דוח הבא <b>'+dateHe(m.earn_date)+'</b></span>':'<span>דוח הבא <b>לא ידוע</b></span>')+(m.mcap_b?'<span>שווי <b><span class="n">$'+num(m.mcap_b,1)+'B</span></b></span>':"")+'</div>';
   var voices=[["tagger","מתייג הסטאפים"],["news","קורא החדשות"],["money","עוקב הכסף הגדול"],["skeptic","המפקפק"]].map(function(v){var it=null;((A[v[0]]||{}).items||[]).forEach(function(i){if(i.t===x.t)it=i});
-    return it?'<div class="voice"><div class="w">'+v[1]+" "+(it.setup?'<span class="chip setup">'+esc(setupName(it.setup))+(it.grade?" · "+esc(it.grade):"")+'</span>':chipV(it.verdict))+'</div><div>'+esc(it.note||"")+'</div>'+((it.sources||[]).length?'<div class="src">'+it.sources.map(link).join("")+'</div>':"")+'</div>':""}).join("");
+    return it?'<div class="voice"><div class="w">'+v[1]+" "+(it.setup?'<span class="chip setup">'+esc(setupName(it.setup))+(it.grade?" · "+esc(it.grade):"")+'</span>':chipV(it.verdict))+'</div><div>'+esc(it.note||"")+'</div>'+((it.sources||[]).length?'<div class="src">'+it.sources.map(link).join(" · ")+'</div>':"")+'</div>':""}).join("");
   right+='<h3>מה הצוות אמר</h3><div class="voices">'+(voices||'<p class="sub">המניה לא הגיעה לרשימה הקצרה, ולכן רק 300 הבודקים עברו עליה.</p>')+'</div></div>';
   return'<div class="detail">'+left+right+'</div>';
 }
@@ -368,15 +368,15 @@ function viewEvidence(){
     tile("עסקאות",num(p.trades&&p.trades.n,0),p.trades&&p.trades.win_rate!=null?num(p.trades.win_rate,0)+"% הצלחה":"")+tile("תוחלת לעסקה",p.trades&&p.trades.avg_r!=null?(p.trades.avg_r>0?"+":"")+num(p.trades.avg_r,2)+"R":"–","אחרי עמלות")+'</div>'+
     '<p class="sub">ימים עם פוזיציה פתוחה: '+n(p.days_in_market_pct,0,"%")+'. סך העמלות: '+usd(p.commission_total,0)+'.</p>'+
     (p.halted_on?'<div class="warnbar">הסימולציה נעצרה ב-'+dateHe(p.halted_on)+': התיק ירד 15% מהשיא, ולפי ספר החוקים אין כניסות חדשות עד בדיקה ידנית. מאז היא לא סחרה.</div>':"")+
-    '<div class="note"><b>העמלה מכריעה.</b> אותם חוקים בשלוש רמות עמלה לפעולה: '+fees.map(function(f){var x=pf[String(f)]||{};return usd(f,f%1?2:0)+" ← תשואה "+pct(x.return_pct)+", תוחלת "+rr(x.trades&&x.trades.avg_r)}).join(" · ")+'</div></div></section>';
+    '<div class="note"><b>העמלה מכריעה.</b> אותם חוקים בשלוש רמות עמלה לפעולה:<div class="crit" style="margin-top:6px">'+fees.map(function(f){var x=pf[String(f)]||{};return'<div style="grid-template-columns:90px minmax(0,1fr) auto"><span>עמלה '+usd(f,f%1?2:0)+'</span><span>תשואה '+pct(x.return_pct)+'</span><span>תוחלת '+rr(x.trades&&x.trades.avg_r)+'</span></div>'}).join("")+'</div></div></div></section>';
   var ps=B.per_setup||{},rows="",order=["BRK","GAP","TGT","PB","MR"],sus=(S.latest&&S.latest.suspended_setups)||{};
   order.forEach(function(k){var v=ps[k];if(!v)return;var e=v.exits||{},reg=v.by_regime||{},a=v.all||{},bf=v.by_fee||{};
     rows+='<tr><td><span class="chip setup">'+esc(setupName(k))+'</span>'+(sus[k]?' <span class="chip no">מושעה</span>':"")+'</td><td class="n">'+num(a.n,0)+'</td><td class="n">'+(a.win_rate==null?"–":num(a.win_rate,0)+"%")+'</td><td>'+rr(v.gross_avg_r)+'</td>'+
-      fees.map(function(f){var x=bf[String(f)]||{};return'<td>'+rr(x.avg_r)+(f===B.commission_usd&&x.t_stat!=null?' <span class="mut n">t='+num(x.t_stat,1)+'</span>':"")+'</td>'}).join("")+
+      fees.map(function(f){var x=bf[String(f)]||{};return'<td>'+rr(x.avg_r)+'</td>'}).join("")+'<td class="n">'+(a.t_stat==null?"–":num(a.t_stat,1))+'</td>'+
       '<td>'+rr(reg.green&&reg.green.avg_r)+'</td><td>'+rr(reg.yellow&&reg.yellow.avg_r)+'</td><td>'+rr(reg.red&&reg.red.avg_r)+'</td><td class="n">'+num(e.target,0)+' / '+num(e.stop,0)+' / '+num(e.time,0)+'</td></tr>'});
   h+='<section style="display:flex;flex-direction:column;gap:8px"><h2>כל סטאפ בנפרד</h2><p class="sub">כל איתות נספר לבדו, בלי מגבלות התיק. התוחלת היא הרווח הממוצע לעסקה ביחידות סיכון (R = 100 דולר). t מתחת למינוס 2 אומר שקשה להסביר את ההפסד במזל. סטאפ כזה מושעה.</p>'+
-    '<div class="tbl"><table><thead><tr><th>סטאפ</th><th>איתותים</th><th>הצלחה</th><th>לפני עמלות</th>'+fees.map(function(f){return'<th>עמלה <span class="n">$'+num(f,f%1?2:0)+'</span></th>'}).join("")+'<th>בירוק</th><th>בצהוב</th><th>באדום</th><th>יעד / סטופ / זמן</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
-    '<p class="mut">שלוש העמודות לפי משטר ו"הצלחה" מחושבות בעמלה של <span class="n">$'+num(B.commission_usd,2)+'</span>.</p></section>';
+    '<div class="tbl"><table><thead><tr><th>סטאפ</th><th>איתותים</th><th>הצלחה</th><th>לפני עמלות</th>'+fees.map(function(f){return'<th>עמלה <span class="n">$'+num(f,f%1?2:0)+'</span></th>'}).join("")+'<th>t</th><th>בירוק</th><th>בצהוב</th><th>באדום</th><th>יעד / סטופ / זמן</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
+    '<p class="mut">t, אחוז ההצלחה ושלוש עמודות המשטר מחושבים בעמלה של <span class="n">$'+num(B.commission_usd,2)+'</span>.</p></section>';
   var sc="";order.forEach(function(k){var v=ps[k]&&ps[k].by_score;if(!v)return;sc+='<tr><td><span class="chip setup">'+esc(setupName(k))+'</span></td><td class="n">'+num(v.median_score,0)+'</td><td>'+rr(v.above&&v.above.avg_r)+' <span class="mut n">('+num(v.above&&v.above.n,0)+')</span></td><td>'+rr(v.below&&v.below.avg_r)+' <span class="mut n">('+num(v.below&&v.below.n,0)+')</span></td></tr>'});
   if(sc)h+='<section style="display:flex;flex-direction:column;gap:8px"><h2>האם ציון 300 עוזר?</h2><p class="sub">אותם איתותים, מחולקים לחצי עם ציון גבוה ולחצי עם ציון נמוך. אם הציון שווה משהו, החצי העליון צריך להיות טוב יותר.</p><div class="tbl"><table><thead><tr><th>סטאפ</th><th>ציון חציוני</th><th>ציון מעל החציון</th><th>ציון מתחת לחציון</th></tr></thead><tbody>'+sc+'</tbody></table></div></section>';
   var lf=(B.check_lift||[]).filter(function(c){return c.t!=null}),nm={};(S.cat&&S.cat.checks||[]).forEach(function(c){nm[c.id]=c.name});
