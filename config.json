@@ -26,5 +26,7 @@
     1,
     7.5,
     25
-  ]
+  ],
+  "commission_per_share_usd": 0.01,
+  "commission_note": "IBI Trade agreement 2025-06-03: US securities, 1 cent per share, minimum $7.5 per trade, no custody fee. FX conversion spread 0.7% under $15,000."
 }
