@@ -12,7 +12,6 @@
   "dd_pause_pct": 15,
   "dd_pause_days": 20,
   "commission_per_trade_usd": 7.5,
-  "alt_commission_per_trade_usd": 25,
   "table_size": 40,
   "history_period": "5y",
   "go_live": {
@@ -22,5 +21,10 @@
     "max_drawdown_pct": 8,
     "first_stage_usd": 2500,
     "first_stage_weeks": 4
-  }
+  },
+  "commission_scenarios_usd": [
+    1,
+    7.5,
+    25
+  ]
 }

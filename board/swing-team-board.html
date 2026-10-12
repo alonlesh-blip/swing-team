@@ -92,6 +92,7 @@ button{font:inherit;color:inherit}
 .item .tk{font-family:var(--mono);font-weight:600}
 .chip{display:inline-flex;align-items:center;gap:5px;border-radius:5px;padding:1px 7px;font-size:12px;font-weight:600;background:var(--sunk);color:var(--ink2);white-space:nowrap}
 .chip.setup{background:var(--accent-soft);color:var(--accent)}
+.chip.sus{background:var(--sunk);color:var(--muted);text-decoration:line-through;text-decoration-thickness:1px}
 .chip.ok{background:var(--good-soft);color:var(--good-ink)} .chip.no{background:var(--bad-soft);color:var(--bad-ink)} .chip.hm{background:var(--warn-soft);color:var(--warn-ink)}
 .src{font-size:12px;color:var(--muted)} .src a{margin-inline-end:8px}
 
@@ -285,14 +286,14 @@ function viewToday(){
   var shown=S.all?T:T.filter(function(x,i){return i<15||x.t===S.sel||appr[x.t]});
   var rows=shown.map(function(x){var cats=x.cats||{},keys=catIds.length?catIds:Object.keys(cats);
     return'<tr class="row" data-t="'+esc(x.t)+'" aria-selected="'+(x.t===S.sel)+'" tabindex="0"><td class="n">'+x.rank+'</td><td class="tk">'+esc(x.t)+(appr[x.t]?' <span class="chip ok">אושרה</span>':"")+'<span class="nm">'+esc(x.name)+'</span></td>'+
-    '<td>'+((x.setups||[]).map(function(s){return'<span class="chip setup">'+esc(setupName(s))+'</span>'}).join(" ")||(x.watch||[]).map(function(w){return'<span class="chip">'+esc(watchName(w))+'</span>'}).join(" ")||'<span class="mut">–</span>')+'</td>'+
+    '<td>'+((x.setups||[]).map(function(s){var su=(x.suspended||[]).indexOf(s)>=0;return'<span class="chip '+(su?"sus":"setup")+'"'+(su?' title="הסטאפ מושעה: ההיסטוריה שלו שלילית"':"")+'>'+esc(setupName(s))+(su?" · מושעה":"")+'</span>'}).join(" ")||(x.watch||[]).map(function(w){return'<span class="chip">'+esc(watchName(w))+'</span>'}).join(" ")||'<span class="mut">–</span>')+'</td>'+
     '<td><div class="score">'+n(x.score,0)+'<span class="bar"><span style="width:'+Math.max(0,Math.min(100,x.score))+'%"></span></span></div></td>'+
     '<td><span class="cats" title="12 קטגוריות, מ-מגמה עד דגלים אדומים">'+keys.map(function(k){return'<span style="height:'+Math.max(2,Math.round((cats[k]||0)*0.18))+'px"></span>'}).join("")+'</span></td>'+
     '<td>'+usd(x.price,2)+'</td><td>'+pct(x.chg,2)+'</td><td>'+n(x.m&&x.m.rk63,0)+'</td><td>'+n(x.m&&x.m.rvol,1)+'</td><td>'+(x.plan?pct(-x.plan.risk_pct):"–")+'</td>'+
     '<td>'+sym(nv[x.t])+sym(mv[x.t])+sym(sv[x.t])+'</td></tr>'}).join("");
   var sg=L.signals_today||{},u=L.universe||{};
   h+='<section style="display:flex;flex-direction:column;gap:8px"><div style="display:flex;justify-content:space-between;gap:8px 20px;flex-wrap:wrap;align-items:baseline"><h2>הטבלה של הסורק</h2>'+
-    '<span class="sub">'+n(u.loaded,0)+' מניות נסרקו · '+n(u.passed_gates,0)+' עברו סף נזילות · '+Object.keys(sg).filter(function(k){return sg[k]}).map(function(k){return esc(setupName(k))+" "+sg[k]}).join(" · ")+'</span></div>'+
+    '<span class="sub">'+n(u.loaded,0)+' מניות נסרקו · '+n(u.passed_gates,0)+' עברו סף נזילות · '+Object.keys(sg).filter(function(k){return sg[k]}).map(function(k){return esc(setupName(k))+" "+sg[k]+((L.suspended_setups||{})[k]?" (מושעה)":"")}).join(" · ")+'</span></div>'+
     '<div class="tbl"><table><thead><tr><th>#</th><th>מניה</th><th>סטאפ</th><th>ציון 300</th><th>12 קטגוריות</th><th>מחיר</th><th>יומי</th><th>דירוג RS</th><th>נפח יחסי</th><th>מרחק לסטופ</th><th title="חדשות, כסף גדול, מפקפק">ח · כ · מ</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
     (T.length>shown.length||S.all?'<div><button class="more" id="more">'+(S.all?"להציג רק את 15 הראשונות":"להציג את כל "+T.length+" השורות")+'</button></div>':"")+
     '<div class="legend-row"><span>ציון 300: אחוז הבדיקות שעברו מתוך אלה שיש להן נתון</span><span>ח · כ · מ: חדשות, כסף גדול, מפקפק</span><span>לוחצים על שורה כדי לראות את 300 הבודקים</span></div></section>';
@@ -319,6 +320,8 @@ function detail(){
   }else left+='<div class="empty">קטלוג הבדיקות עוד לא נטען.</div>';
   left+='</div>';
   var p=x.plan,m=x.m||{},A=L.agents||{},right='<div style="display:flex;flex-direction:column;gap:12px;min-width:0">';
+  var susd=(L.suspended_setups||{}),susNote=(x.suspended||[]).map(function(k){return'<div class="warnbar">'+esc(setupName(k))+' מושעה: '+esc(susd[k]||"ההיסטוריה שלו שלילית")+'. הבוס לא יכול לאשר אותו.</div>'}).join("");
+  right+=susNote;
   if(p){right+='<h3>'+(p.provisional?"תוכנית זמנית (אין סטאפ היום)":"התוכנית לפי "+esc(setupName(p.setup)))+'</h3><div class="plan">'+
     tile("סגירת ייחוס","$"+num(p.ref_close,2))+tile("סטופ","$"+num(p.stop,2),"‎-"+num(p.risk_pct,1)+"%")+tile("יעד "+num(p.rr,1)+"R","$"+num(p.target,2))+
     tile("לא לקנות מעל","$"+num(p.max_entry,2))+tile("כמות",num(p.shares,0),"$"+num(p.position_usd,0))+tile("סיכון","$"+num(p.risk_usd,0),"יציאה אחרי "+p.time_stop_days+" ימים")+'</div>'}
@@ -357,18 +360,23 @@ function statRow(name,s,extra){s=s||{};return'<tr><td>'+name+'</td><td class="n"
 function viewEvidence(){
   var B=S.bt;
   if(!B||!B.portfolio)return'<div class="empty"><b>הבדיקה ההיסטורית עוד לא רצה.</b><br>אחרי ריצת המנוע הראשונה יופיע כאן מה כל סטאפ וכל אחד מ-300 הבודקים עשה בשנים האחרונות.</div>';
-  var p=B.portfolio,pa=B.portfolio_alt_fee||{},h="";
+  var p=B.portfolio,pf=B.portfolio_by_fee||{},fees=B.fee_scenarios||[],h="";
   h+='<div class="note"><b>איך לקרוא את זה.</b> זו בדיקה על העבר, מ-'+dateHe(B.from)+' עד '+dateHe(B.to)+', ולא הבטחה. '+(B.caveats||[]).map(esc).join(" ")+'</div>';
   h+='<section class="two"><div class="card"><h2>סימולציית התיק לפי ספר החוקים</h2><p class="sub" style="margin-bottom:8px">אותם חוקים, אותו כיס של 10,000 דולר, עמלה של '+usd(B.commission_usd,2)+' לפעולה.</p><div id="ch-bt"></div></div>'+
     '<div class="card" style="display:flex;flex-direction:column;gap:10px"><h2>השורה התחתונה</h2><div class="tiles">'+tile("התיק",(p.return_pct>0?"+":"")+num(p.return_pct,1)+"%",num(p.years,1)+" שנים")+tile("SPY",(p.spy_return_pct>0?"+":"")+num(p.spy_return_pct,1)+"%","קנה והחזק")+
     tile("היקום, משקל שווה",(p.universe_ew_return_pct>0?"+":"")+num(p.universe_ew_return_pct,1)+"%","אותה הטיית שרידות")+tile("ירידה מקסימלית",num(p.max_dd_pct,1)+"%","SPY: "+num(p.spy_max_dd_pct,1)+"%")+
     tile("עסקאות",num(p.trades&&p.trades.n,0),p.trades&&p.trades.win_rate!=null?num(p.trades.win_rate,0)+"% הצלחה":"")+tile("תוחלת לעסקה",p.trades&&p.trades.avg_r!=null?(p.trades.avg_r>0?"+":"")+num(p.trades.avg_r,2)+"R":"–","אחרי עמלות")+'</div>'+
     '<p class="sub">ימים עם פוזיציה פתוחה: '+n(p.days_in_market_pct,0,"%")+'. סך העמלות: '+usd(p.commission_total,0)+'.</p>'+
-    '<div class="note"><b>העמלה משנה הכול.</b> באותם חוקים עם עמלה של '+usd(B.alt_commission_usd,2)+' לפעולה: תשואה '+pct(pa.return_pct)+', תוחלת '+rr(pa.trades&&pa.trades.avg_r)+' לעסקה.</div></div></section>';
-  var ps=B.per_setup||{},alt=B.per_setup_alt_fee||{},rows="",order=["BRK","GAP","TGT","PB","MR"];
-  order.forEach(function(k){var v=ps[k];if(!v)return;var e=v.exits||{},reg=v.by_regime||{};rows+=statRow('<span class="chip setup">'+esc(setupName(k))+'</span>',v.all,'<td>'+rr(reg.green&&reg.green.avg_r)+'</td><td>'+rr(reg.yellow&&reg.yellow.avg_r)+'</td><td>'+rr(reg.red&&reg.red.avg_r)+'</td><td>'+rr(alt[k]&&alt[k].avg_r)+'</td><td class="n">'+num(e.target,0)+' / '+num(e.stop,0)+' / '+num(e.time,0)+'</td>')});
-  h+='<section style="display:flex;flex-direction:column;gap:8px"><h2>כל סטאפ בנפרד</h2><p class="sub">כל איתות נספר לבדו, בלי מגבלות התיק. תוחלת ב-R אחרי עמלות. t מעל 2 בערך אומר שקשה להסביר את התוצאה במזל בלבד.</p>'+
-    '<div class="tbl"><table><thead><tr><th>סטאפ</th><th>איתותים</th><th>הצלחה</th><th>תוחלת</th><th>מקדם רווח</th><th>t</th><th>בירוק</th><th>בצהוב</th><th>באדום</th><th>בעמלה '+'$'+num(B.alt_commission_usd,0)+'</th><th>יעד / סטופ / זמן</th></tr></thead><tbody>'+rows+'</tbody></table></div></section>';
+    (p.halted_on?'<div class="warnbar">הסימולציה נעצרה ב-'+dateHe(p.halted_on)+': התיק ירד 15% מהשיא, ולפי ספר החוקים אין כניסות חדשות עד בדיקה ידנית. מאז היא לא סחרה.</div>':"")+
+    '<div class="note"><b>העמלה מכריעה.</b> אותם חוקים בשלוש רמות עמלה לפעולה: '+fees.map(function(f){var x=pf[String(f)]||{};return usd(f,f%1?2:0)+" ← תשואה "+pct(x.return_pct)+", תוחלת "+rr(x.trades&&x.trades.avg_r)}).join(" · ")+'</div></div></section>';
+  var ps=B.per_setup||{},rows="",order=["BRK","GAP","TGT","PB","MR"],sus=(S.latest&&S.latest.suspended_setups)||{};
+  order.forEach(function(k){var v=ps[k];if(!v)return;var e=v.exits||{},reg=v.by_regime||{},a=v.all||{},bf=v.by_fee||{};
+    rows+='<tr><td><span class="chip setup">'+esc(setupName(k))+'</span>'+(sus[k]?' <span class="chip no">מושעה</span>':"")+'</td><td class="n">'+num(a.n,0)+'</td><td class="n">'+(a.win_rate==null?"–":num(a.win_rate,0)+"%")+'</td><td>'+rr(v.gross_avg_r)+'</td>'+
+      fees.map(function(f){var x=bf[String(f)]||{};return'<td>'+rr(x.avg_r)+(f===B.commission_usd&&x.t_stat!=null?' <span class="mut n">t='+num(x.t_stat,1)+'</span>':"")+'</td>'}).join("")+
+      '<td>'+rr(reg.green&&reg.green.avg_r)+'</td><td>'+rr(reg.yellow&&reg.yellow.avg_r)+'</td><td>'+rr(reg.red&&reg.red.avg_r)+'</td><td class="n">'+num(e.target,0)+' / '+num(e.stop,0)+' / '+num(e.time,0)+'</td></tr>'});
+  h+='<section style="display:flex;flex-direction:column;gap:8px"><h2>כל סטאפ בנפרד</h2><p class="sub">כל איתות נספר לבדו, בלי מגבלות התיק. התוחלת היא הרווח הממוצע לעסקה ביחידות סיכון (R = 100 דולר). t מתחת למינוס 2 אומר שקשה להסביר את ההפסד במזל. סטאפ כזה מושעה.</p>'+
+    '<div class="tbl"><table><thead><tr><th>סטאפ</th><th>איתותים</th><th>הצלחה</th><th>לפני עמלות</th>'+fees.map(function(f){return'<th>עמלה <span class="n">$'+num(f,f%1?2:0)+'</span></th>'}).join("")+'<th>בירוק</th><th>בצהוב</th><th>באדום</th><th>יעד / סטופ / זמן</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
+    '<p class="mut">שלוש העמודות לפי משטר ו"הצלחה" מחושבות בעמלה של <span class="n">$'+num(B.commission_usd,2)+'</span>.</p></section>';
   var sc="";order.forEach(function(k){var v=ps[k]&&ps[k].by_score;if(!v)return;sc+='<tr><td><span class="chip setup">'+esc(setupName(k))+'</span></td><td class="n">'+num(v.median_score,0)+'</td><td>'+rr(v.above&&v.above.avg_r)+' <span class="mut n">('+num(v.above&&v.above.n,0)+')</span></td><td>'+rr(v.below&&v.below.avg_r)+' <span class="mut n">('+num(v.below&&v.below.n,0)+')</span></td></tr>'});
   if(sc)h+='<section style="display:flex;flex-direction:column;gap:8px"><h2>האם ציון 300 עוזר?</h2><p class="sub">אותם איתותים, מחולקים לחצי עם ציון גבוה ולחצי עם ציון נמוך. אם הציון שווה משהו, החצי העליון צריך להיות טוב יותר.</p><div class="tbl"><table><thead><tr><th>סטאפ</th><th>ציון חציוני</th><th>ציון מעל החציון</th><th>ציון מתחת לחציון</th></tr></thead><tbody>'+sc+'</tbody></table></div></section>';
   var lf=(B.check_lift||[]).filter(function(c){return c.t!=null}),nm={};(S.cat&&S.cat.checks||[]).forEach(function(c){nm[c.id]=c.name});
@@ -377,7 +385,7 @@ function viewEvidence(){
   var head='<thead><tr><th></th><th>הבדיקה</th><th>יתרון ב-10 ימים</th><th>t</th><th>עוברים</th></tr></thead>';
   if(srt.length)h+='<section style="display:flex;flex-direction:column;gap:8px"><h2>אילו בודקים באמת ניבאו משהו</h2><p class="sub">לכל בדיקה: התשואה ב-10 ימי המסחר שאחרי, מי שעבר מול מי שנכשל. מתוך '+lf.length+' בדיקות שאפשר למדוד, ל-'+strong+' יש t של 2 ומעלה בערך מוחלט. כשבודקים 300 דברים, כ-15 יצאו "מובהקים" גם במזל.</p>'+
     '<div class="two"><div style="display:flex;flex-direction:column;gap:6px;min-width:0"><h3>12 שהכי עזרו</h3><div class="tbl"><table>'+head+'<tbody>'+srt.slice(0,12).map(lrow).join("")+'</tbody></table></div></div><div style="display:flex;flex-direction:column;gap:6px;min-width:0"><h3>12 שעבדו הפוך: מי שנכשל בהן הצליח יותר</h3><div class="tbl"><table>'+head+'<tbody>'+srt.slice(-12).reverse().map(lrow).join("")+'</tbody></table></div></div></div>'+
-    '<p class="mut">בדיקות שוק (משטר ורוחב) נמדדות על תשואת היקום כולו, ימים שעברו מול ימים שנכשלו.</p></section>';
+    '<p class="mut">היתרון נמדד מול SPY ולא מתוקנן לתנודתיות. בשנים שבהן מניות תנודתיות עלו יותר, בדיקות של "שקט" ו"טווח צר" יוצאות שליליות בגלל התקופה ולא בהכרח בגלל הבדיקה. בדיקות שוק (משטר ורוחב) נמדדות על תשואת היקום כולו, ימים שעברו מול ימים שנכשלו.</p></section>';
   return h;
 }
 /* ---------- log ---------- */
@@ -395,7 +403,7 @@ function viewRules(){
   '<section class="rules"><div class="card"><h3>הכיס</h3><ul><li>עד '+usd(c.equity_usd||10000,0)+', מניות אמריקאיות בלבד, קנייה בלבד</li><li>בלי מינוף, בלי אופציות, בלי שורט</li><li>אופק עסקה: ימים עד שבועות</li><li>מחיר מעל 10 דולר ומחזור יומי מעל 20 מיליון דולר</li></ul></div>'+
   '<div class="card"><h3>סיכון</h3><ul><li>סיכון של '+v("risk_per_trade_pct",1,"%")+' מהתיק לעסקה</li><li>פוזיציה עד '+v("max_position_pct",20,"%")+' מהתיק</li><li>עד '+v("max_open_positions",5)+' פוזיציות, עד '+v("max_per_sector",2)+' מאותו סקטור</li><li>סיכון פתוח כולל עד '+v("max_open_risk_pct",4,"%")+'</li><li>עד '+v("max_new_per_day",2)+' כניסות חדשות ביום</li><li>סטופ, יעד ותאריך יציאה נקבעים לפני הכניסה ולא זזים לרעה</li></ul></div>'+
   '<div class="card"><h3>משטר שוק</h3><ul><li>ירוק: גודל מלא</li><li>צהוב: חצי גודל</li><li>אדום: אין כניסות חדשות</li><li>'+esc(S.latest&&S.latest.regime&&S.latest.regime.rule||"הכלל המדויק מופיע אחרי הריצה הראשונה.")+'</li></ul></div>'+
-  '<div class="card"><h3>בלמים</h3><ul><li>ירידה של '+v("dd_half_size_pct",10,"%")+' מהשיא: חצי גודל</li><li>ירידה של '+v("dd_pause_pct",15,"%")+': עוצרים כניסות עד בדיקה ידנית</li><li>אין כניסה 5 ימי מסחר לפני דוח רבעוני</li><li>אין כניסה אם המניה נפתחת מתחת לסטופ או יותר מ-ATR אחד מעל סגירת הייחוס</li></ul></div>'+
+  '<div class="card"><h3>בלמים</h3><ul><li>ירידה של '+v("dd_half_size_pct",10,"%")+' מהשיא: חצי גודל</li><li>ירידה של '+v("dd_pause_pct",15,"%")+': עוצרים כניסות עד בדיקה ידנית</li><li>אין כניסה 5 ימי מסחר לפני דוח רבעוני</li><li>אין כניסה אם המניה נפתחת מתחת לסטופ או יותר מ-ATR אחד מעל סגירת הייחוס</li><li>סטאפ שההיסטוריה שלו שלילית במובהק מושעה</li><li>ציון 300 מתחת ל-'+v("min_score",55)+': אין כניסה</li></ul></div>'+
   '<div class="card"><h3>מי מחליט מה</h3><ul><li>הסורק מביא טבלה, לא דעה</li><li>המתייג רשאי לתייג רק את חמשת הסטאפים שכאן</li><li>קורא החדשות ועוקב הכסף הגדול מביאים עובדות עם מקור</li><li>המפקפק חייב לכתוב למה העסקה תיכשל. וטו שלו על עובדה שלא הופרכה עוצר את העסקה</li><li>הבוס רוצה להגיד כן, אבל לא יכול לעקוף חוק, וטו פתוח או משטר אדום</li></ul></div>'+
   '<div class="card"><h3>מעבר לכסף אמיתי</h3><ul><li>'+(g.min_weeks||8)+' שבועות ו-'+(g.min_closed_trades||20)+' עסקאות סגורות על הנייר</li><li>תוחלת של '+(g.min_expectancy_r||0.25)+'R לעסקה אחרי עמלות</li><li>ירידה מקסימלית עד '+(g.max_drawdown_pct||8)+'%, תשואה חיובית וגבוהה מ-SPY</li><li>שלב ראשון: '+usd(g.first_stage_usd||2500,0)+' ל-'+(g.first_stage_weeks||4)+' שבועות</li><li>ההחלטה תמיד של אלון. הצוות לא נוגע בכסף</li></ul></div></section>'+
   '<section style="display:flex;flex-direction:column;gap:10px"><h2>חמשת הסטאפים</h2>'+(setups?'<div class="rules">'+setups+'</div>':'<div class="empty">הגדרות הסטאפים יופיעו אחרי ריצת המנוע הראשונה.</div>')+'</section>';

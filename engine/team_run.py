@@ -71,7 +71,7 @@ def prep(d):
     cat_of = {c["id"]: c["cat"] for c in C["checks"]}
     catn = {c["id"]: c["name"] for c in C["categories"]}
     lift = {x["id"]: x for x in (B or {}).get("check_lift", [])}
-    sus = suspended_setups(B)
+    sus = L.get("suspended_setups", suspended_setups(B))
     reg = L["regime"]
     s = st["stats"]
     print("=== BRIEFING ===")
@@ -111,6 +111,7 @@ def prep(d):
             by.setdefault(cat_of[f], []).append(f)
         strong = [f"{names[f]} (t={lift[f]['t']})" for f in fails if f in lift and lift[f].get("t") is not None and lift[f]["t"] >= 2]
         row = {"rank": r["rank"], "t": r["t"], "name": r["name"], "sector": r["sector"], "setups": r["setups"],
+               "suspended": r.get("suspended", []),
                "watch": r["watch"], "score": r["score"], "cats": r["cats"], "price": r["price"], "chg": r["chg"],
                "plan": r["plan"], "m": r["m"], "red_flags": [names[x] for x in r["red_flags"]],
                "failed_checks_with_proven_edge": strong[:8]}
@@ -152,7 +153,7 @@ def finish(d):
         sys.exit("agents.json problems:\n- " + "\n- ".join(errs))
     boss = A["boss"]
     _need(isinstance(boss.get("headline"), str) and boss["headline"], "boss.headline missing", errs)
-    sus = suspended_setups(B)
+    sus = L.get("suspended_setups", suspended_setups(B))
     blocked = {i["t"] for i in A["news"].get("items", []) if i["verdict"] == "block"}
     vetoed = {i["t"] for i in A["skeptic"].get("items", []) if i["verdict"] == "veto"}
     reviewed = {i["t"] for i in A["skeptic"].get("items", [])}
@@ -202,7 +203,8 @@ def finish(d):
         boss_out["headline"] = "אין עסקה היום: החוקים עצרו את ההזמנה"
     boss_out["stat"] = (f"{len(accepted)} אושרו" if len(accepted) != 1 else "1 אושרה") if accepted else "אין עסקה"
     A = dict(A, boss=boss_out)
-    doc = {k: L[k] for k in ("regime", "universe", "signals_today", "watch_today", "sectors", "table", "engine_version")}
+    doc = {k: L.get(k) for k in ("regime", "universe", "signals_today", "watch_today", "suspended_setups", "sectors", "table",
+                               "engine_version")}
     doc.update({"date": L["asof"], "agents": A})
     dump(d, "team_latest.json", doc)
     dump(d, "run_slim.json", {"date": L["asof"], "regime": L["regime"]["label"], "headline": boss_out["headline"],

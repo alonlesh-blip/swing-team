@@ -103,9 +103,10 @@ def per_setup(B, cfg, start):
                     skipped["too_small"] = skipped.get("too_small", 0) + 1
                     continue
                 gross = (exit_ - entry) / (entry - stp[i, j])
-                net_usd = sh * (exit_ - entry) - 2 * fee
+                gross_usd = sh * (exit_ - entry)
                 planned = eq * cfg["risk_per_trade_pct"] / 100
-                rows.append((years[i], REG[i], gross, net_usd / planned, x - e + 1, reason, B["SC"][i, j]))
+                rows.append((years[i], REG[i], gross, (gross_usd - 2 * fee) / planned, x - e + 1, reason, B["SC"][i, j],
+                             gross_usd / planned, 2 / planned))
         if not rows:
             out[k] = {"all": {"n": 0}, "skipped": skipped}
             continue
@@ -119,6 +120,9 @@ def per_setup(B, cfg, start):
                "by_regime": {name: _stats(nr[rg == v]) for name, v in (("green", 2), ("yellow", 1), ("red", 0))},
                "by_year": {str(int(y)): _stats(nr[yr == y]) for y in sorted(set(yr))},
                "skipped": skipped}
+        gu = np.array([r[7] for r in rows])
+        per_fee = rows[0][8]
+        res["by_fee"] = {str(f): _stats(gu - f * per_fee) for f in cfg.get("commission_scenarios_usd", [])}
         sc = np.array([r[6] for r in rows], dtype="float64")
         if np.isfinite(sc).sum() >= 40:
             med = float(np.nanmedian(sc))
@@ -140,6 +144,7 @@ def portfolio(B, cfg, start, tickers, sectors):
     trades = []
     curve = []
     pause_until = -1
+    halted_on = None
     exposure_days = 0
     mult_of = {2: 1.0, 1: cfg["yellow_size_mult"], 0: 0.0}
     for t in range(start, T):
@@ -198,6 +203,8 @@ def portfolio(B, cfg, start, tickers, sectors):
         # 4. new orders from today's close
         if dd <= -cfg["dd_pause_pct"] / 100 and t > pause_until:
             pause_until = t + cfg["dd_pause_days"]
+            if halted_on is None:
+                halted_on = B["dates"][t]
         reg = REG[t]
         if not np.isfinite(reg) or reg < 1 or t <= pause_until:
             continue
@@ -252,6 +259,7 @@ def portfolio(B, cfg, start, tickers, sectors):
         "by_setup": {k: _stats([x["r"] for x in trades if x["setup"] == k]) for k in PRIORITY},
         "commission_total": round(len(trades) * 2 * fee, 0),
         "years": round(n_days / 252, 1),
+        "halted_on": halted_on,
     }
     step = 5
     pts = [{"d": B["dates"][start + i], "eq": round(float(curve[i]), 0),

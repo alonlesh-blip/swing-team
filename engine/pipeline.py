@@ -88,9 +88,57 @@ def run(px, uni, cfg, do_backtest=True, ext_fn=None, log=print):
         B["ew"] = np.nancumprod(1 + np.nan_to_num(np.nanmean(B["C"][1:] / B["C"][:-1] - 1, axis=1), nan=0.0))
         B["ew"] = np.concatenate([[1.0], B["ew"]])
 
+    # ---- history first: the table needs to know which setups their own history suspends
+    backtest, suspended = None, {}
+    if do_backtest:
+        log("backtest: per-setup")
+        per = bt.per_setup(B, cfg, start)
+        log("backtest: portfolio")
+        secs = [sectors_of[t] for t in tickers]
+        summ, curve, trades = bt.portfolio(B, cfg, start, tickers, secs)
+        scen = {}
+        for f in cfg.get("commission_scenarios_usd", []):
+            if f == cfg["commission_per_trade_usd"]:
+                sm = summ
+            else:
+                sm, _, _ = bt.portfolio(B, dict(cfg, commission_per_trade_usd=f), start, tickers, secs)
+            scen[str(f)] = {k: sm[k] for k in ("return_pct", "max_dd_pct", "halted_on")} | {"trades": sm["trades"]}
+        backtest = {
+            "asof": dates[-1], "from": dates[start], "to": dates[-1], "engine_version": ENGINE_VERSION,
+            "commission_usd": cfg["commission_per_trade_usd"], "fee_scenarios": cfg.get("commission_scenarios_usd", []),
+            "per_setup": per, "portfolio": summ, "portfolio_by_fee": scen, "curve": curve, "last_trades": trades[-40:],
+            "n_trades": len(trades), "check_lift": lift.result(checks.IDS),
+            "caveats": [
+                "היקום הוא חברי המדדים של היום, כולל חברות שנכנסו למדד כי עלו. זה מנפח את התוצאות (הטיית שרידות).",
+                "דיבידנדים לא נספרים, לא במניות ולא ב-SPY.",
+                "ההנחה היא ביצוע במחיר הפתיחה ובמחיר הסטופ או היעד בדיוק. בפועל יש החלקה.",
+                "ביום שבו נגעו גם בסטופ וגם ביעד, נספר סטופ.",
+                "הכללים לא כוילו על הנתונים האלה, אבל גם לא נבדקו על נתונים שלא ראינו. עבר אינו מבטיח עתיד.",
+            ],
+        }
+    else:
+        try:
+            with open(os.path.join(ROOT, "out", "backtest.json"), encoding="utf-8") as f:
+                per = json.load(f).get("per_setup", {})
+        except (OSError, ValueError):
+            per = {}
+    for k, v in per.items():
+        a = v.get("all", {})
+        if a.get("n", 0) >= 50 and a.get("avg_r") is not None and a["avg_r"] < 0 and (a.get("t_stat") or 0) <= -2:
+            suspended[k] = f"תוחלת היסטורית {a['avg_r']}R על {a['n']} איתותים (t={a['t_stat']})"
+
     # ---- today's table
+    def tier(setups_, watch_):
+        if any(k not in suspended for k in setups_):
+            return 0          # a setup that may be traded
+        if setups_:
+            return 1          # a setup, but its own history suspends it
+        return 2 if watch_ else 3
+
+    for r in rows.values():   # a tradable setup comes before a suspended one
+        r["setups"] = [k for k in r["setups"] if k not in suspended] + [k for k in r["setups"] if k in suspended]
     order = sorted((t for t in rows if rows[t]["gate"] and rows[t]["score"] is not None),
-                   key=lambda t: (-(len(rows[t]["setups"]) > 0), -(len(rows[t]["watch"]) > 0), -rows[t]["score"]))
+                   key=lambda t: (tier(rows[t]["setups"], rows[t]["watch"]), -rows[t]["score"]))
     table_t = order[: cfg["table_size"]]
     ext = ext_fn(table_t, asof) if ext_fn else {}
     reg = int(M.regime[-1]) if np.isfinite(M.regime[-1]) else 1
@@ -125,11 +173,12 @@ def run(px, uni, cfg, do_backtest=True, ext_fn=None, log=print):
             "rank": rank, "t": t, "name": uni[t]["name"], "sector": uni[t]["sector"], "price": _r(r["c"]),
             "chg": _pct(r["c"] / r["pc"] - 1, 2) if r["pc"] else None, "score": round(score, 1), "cats": cats,
             "setups": r["setups"], "watch": r["watch"], "plan": plan, "m": m,
+            "suspended": [k for k in r["setups"] if k in suspended],
             "passed": int(np.nansum(bits)), "failed": int((bits == 0).sum()), "unknown": int((~known).sum()),
             "red_flags": [checks.IDS[i] for i in cat_idx["RF"] if bits[i] == 0],
             "bits": "".join("-" if np.isnan(b) else ("1" if b else "0") for b in bits),
         })
-    table.sort(key=lambda x: (-(len(x["setups"]) > 0), -(len(x["watch"]) > 0), -x["score"]))
+    table.sort(key=lambda x: (tier(x["setups"], x["watch"]), -x["score"]))
     for i, x in enumerate(table, 1):
         x["rank"] = i
 
@@ -163,6 +212,7 @@ def run(px, uni, cfg, do_backtest=True, ext_fn=None, log=print):
         "universe": {"requested": len(uni), "loaded": N, "with_today_bar": len(rows), "passed_gates": len(gated),
                      "score_median": _r(np.nanmedian(scores), 1), "score_p90": _r(np.nanpercentile(scores, 90), 1),
                      "score_max": _r(np.nanmax(scores), 1)},
+        "suspended_setups": suspended,
         "signals_today": {k: int(sum(1 for t in gated if k in rows[t]["setups"])) for k in setups.PRIORITY},
         "watch_today": {k: int(sum(1 for t in gated if k in rows[t]["watch"])) for k in setups.WATCH},
         "sectors": sector_rows,
@@ -182,35 +232,8 @@ def run(px, uni, cfg, do_backtest=True, ext_fn=None, log=print):
         {"id": k, "name": v[0], "target_r": v[1], "time_stop_days": v[2], "rules": setups.RULES_HE[k]}
         for k, v in setups.SETUPS.items()], "watch": setups.WATCH, "engine_version": ENGINE_VERSION, "config": cfg}}
 
-    if do_backtest:
-        log("backtest: per-setup")
-        per = bt.per_setup(B, cfg, start)
-        log("backtest: portfolio")
-        secs = [sectors_of[t] for t in tickers]
-        summ, curve, trades = bt.portfolio(B, cfg, start, tickers, secs)
-        alt = dict(cfg, commission_per_trade_usd=cfg["alt_commission_per_trade_usd"])
-        summ_alt, _, _ = bt.portfolio(B, alt, start, tickers, secs)
-        per_alt = bt.per_setup(B, alt, start)
-        # does the 300-check score matter? same signals, split by score
-        buckets = {}
-        for k in setups.PRIORITY:
-            sig = B["SIG"][k][start:]
-            sc = B["SC"][start:][sig]
-            buckets[k] = {"n": int(sig.sum()), "score_median": _r(np.nanmedian(sc), 1) if sig.sum() else None}
-        out["backtest"] = {
-            "asof": dates[-1], "from": dates[start], "to": dates[-1], "engine_version": ENGINE_VERSION,
-            "commission_usd": cfg["commission_per_trade_usd"], "alt_commission_usd": cfg["alt_commission_per_trade_usd"],
-            "per_setup": per, "per_setup_alt_fee": {k: v.get("all") for k, v in per_alt.items()},
-            "portfolio": summ, "portfolio_alt_fee": summ_alt, "curve": curve, "last_trades": trades[-40:],
-            "n_trades": len(trades), "signal_scores": buckets, "check_lift": lift.result(checks.IDS),
-            "caveats": [
-                "היקום הוא חברי המדדים של היום, כולל חברות שנכנסו למדד כי עלו. זה מנפח את התוצאות (הטיית שרידות).",
-                "דיבידנדים לא נספרים, לא במניות ולא ב-SPY.",
-                "ההנחה היא ביצוע במחיר הפתיחה ובמחיר הסטופ/היעד בדיוק. בפועל יש החלקה.",
-                "ביום שבו נגעו גם בסטופ וגם ביעד, נספר סטופ.",
-                "הכללים לא כוילו על הנתונים האלה, אבל גם לא נבדקו על נתונים שלא ראינו. עבר אינו מבטיח עתיד.",
-            ],
-        }
+    if backtest:
+        out["backtest"] = backtest
     return out
 
 
