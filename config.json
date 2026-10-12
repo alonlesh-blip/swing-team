@@ -1,0 +1,26 @@
+{
+  "equity_usd": 10000,
+  "risk_per_trade_pct": 1.0,
+  "max_position_pct": 20,
+  "max_open_positions": 5,
+  "max_new_per_day": 2,
+  "max_per_sector": 2,
+  "max_open_risk_pct": 4.0,
+  "yellow_size_mult": 0.5,
+  "min_score": 55,
+  "dd_half_size_pct": 10,
+  "dd_pause_pct": 15,
+  "dd_pause_days": 20,
+  "commission_per_trade_usd": 7.5,
+  "alt_commission_per_trade_usd": 25,
+  "table_size": 40,
+  "history_period": "5y",
+  "go_live": {
+    "min_weeks": 8,
+    "min_closed_trades": 20,
+    "min_expectancy_r": 0.25,
+    "max_drawdown_pct": 8,
+    "first_stage_usd": 2500,
+    "first_stage_weeks": 4
+  }
+}

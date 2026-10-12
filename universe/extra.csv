@@ -1,0 +1,35 @@
+# Extra tickers on top of the S&P 500. Format: TICKER,Sector,Name
+# Sector must be one of the 11 GICS sector names (or empty if unsure).
+# Nasdaq-100 names that are not in the S&P 500
+ARM,Information Technology,Arm Holdings
+ASML,Information Technology,ASML Holding
+AZN,Health Care,AstraZeneca
+MELI,Consumer Discretionary,MercadoLibre
+PDD,Consumer Discretionary,PDD Holdings
+TEAM,Information Technology,Atlassian
+ZS,Information Technology,Zscaler
+MRVL,Information Technology,Marvell Technology
+MSTR,Information Technology,Strategy
+SHOP,Information Technology,Shopify
+GFS,Information Technology,GlobalFoundries
+# AI infrastructure: chips, power, cooling, networking
+TSM,Information Technology,Taiwan Semiconductor
+VRT,Industrials,Vertiv
+CLS,Information Technology,Celestica
+ALAB,Information Technology,Astera Labs
+CRDO,Information Technology,Credo Technology
+COHR,Information Technology,Coherent
+LITE,Information Technology,Lumentum
+MOD,Industrials,Modine Manufacturing
+BE,Industrials,Bloom Energy
+NBIS,Information Technology,Nebius Group
+CRWV,Information Technology,CoreWeave
+IREN,Information Technology,IREN
+OKLO,Utilities,Oklo
+CCJ,Energy,Cameco
+TLN,Utilities,Talen Energy
+# Israeli dual-listed names
+NVMI,Information Technology,Nova
+CAMT,Information Technology,Camtek
+TSEM,Information Technology,Tower Semiconductor
+ORA,Utilities,Ormat Technologies

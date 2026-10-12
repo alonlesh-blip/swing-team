@@ -1,0 +1,433 @@
+<title>צוות הסווינג</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@700;900&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Hebrew:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: a shift board. One line of seven stations (the team) runs across the top of the day;
+   everything under it is what that line produced. Numbers are set in mono, verdicts in a serif headline. */
+:root{
+  --bg:#f3f6f7; --surface:#fcfcfb; --sunk:#eaeff1; --ink:#0e1b22; --ink2:#45545d; --muted:#75838b; --line:#dbe2e5;
+  --accent:#0e5f73; --accent-soft:#deedf1; --accent-ink:#ffffff;
+  --good:#0ca30c; --good-ink:#096b09; --good-soft:#e2f4e2;
+  --bad:#d03b3b; --bad-ink:#a32626; --bad-soft:#fae6e6;
+  --warn:#fab219; --warn-ink:#7d5200; --warn-soft:#fdf1d3;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --grid:#e1e0d9; --axis:#c3c2b7;
+  --display:"Frank Ruhl Libre","Times New Roman",serif;
+  --body:"IBM Plex Sans Hebrew","Segoe UI",Arial,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0f1416; --surface:#1a1a19; --sunk:#232827; --ink:#f0efec; --ink2:#c3c8c5; --muted:#8d9793; --line:#2e3433;
+  --accent:#58b6cc; --accent-soft:#1b3138; --accent-ink:#06191e;
+  --good:#0ca30c; --good-ink:#5fd25f; --good-soft:#15301a;
+  --bad:#e66767; --bad-ink:#f08b8b; --bad-soft:#3a1c1c;
+  --warn:#fab219; --warn-ink:#fbc855; --warn-soft:#3a2f12;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --grid:#2c2c2a; --axis:#383835; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#0f1416; --surface:#1a1a19; --sunk:#232827; --ink:#f0efec; --ink2:#c3c8c5; --muted:#8d9793; --line:#2e3433;
+  --accent:#58b6cc; --accent-soft:#1b3138; --accent-ink:#06191e;
+  --good:#0ca30c; --good-ink:#5fd25f; --good-soft:#15301a;
+  --bad:#e66767; --bad-ink:#f08b8b; --bad-soft:#3a1c1c;
+  --warn:#fab219; --warn-ink:#fbc855; --warn-soft:#3a2f12;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --grid:#2c2c2a; --axis:#383835; color-scheme:dark }
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.55}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:18px 56px;display:flex;flex-direction:column;gap:18px}
+.n{font-family:var(--mono);font-variant-numeric:tabular-nums;direction:ltr;unicode-bidi:isolate;display:inline-block}
+td.n,th.n{display:table-cell;text-align:right}
+h1,h2,h3,p{margin:0}
+h2{font-size:17px;font-weight:700;text-wrap:balance}
+h3{font-size:14px;font-weight:600}
+.sub{color:var(--ink2);font-size:13.5px}
+.mut{color:var(--muted);font-size:12.5px}
+a{color:var(--accent)}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* masthead */
+.mast{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:10px 24px}
+.mast h1{font-family:var(--display);font-weight:900;font-size:30px;line-height:1.1;letter-spacing:.2px}
+.mast .meta{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;color:var(--ink2);font-size:13px}
+.pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:3px 11px;font-weight:600;font-size:13px;border:1px solid transparent}
+.pill i{width:9px;height:9px;display:inline-block}
+.pill.green{background:var(--good-soft);color:var(--good-ink)} .pill.green i{background:var(--good);border-radius:50%}
+.pill.yellow{background:var(--warn-soft);color:var(--warn-ink)} .pill.yellow i{background:var(--warn);transform:rotate(45deg)}
+.pill.red{background:var(--bad-soft);color:var(--bad-ink)} .pill.red i{background:var(--bad)}
+.pill.paper{background:var(--accent-soft);color:var(--accent)}
+.tabs{display:flex;gap:4px;overflow-x:auto;border-bottom:1px solid var(--line);scrollbar-width:none}
+.tabs button{background:none;border:0;border-bottom:3px solid transparent;padding:9px 13px;cursor:pointer;color:var(--ink2);font-weight:600;white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.view{display:flex;flex-direction:column;gap:18px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.note{background:var(--sunk);border-radius:var(--r);padding:12px 14px;color:var(--ink2);font-size:13.5px}
+.empty{border:1px dashed var(--line);border-radius:var(--r);padding:22px 16px;color:var(--ink2);text-align:center}
+.warnbar{background:var(--warn-soft);color:var(--warn-ink);border-radius:var(--r);padding:10px 14px;font-size:13.5px;font-weight:500}
+
+/* boss verdict */
+.verdict{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:18px;align-items:start}
+.verdict .who{font-size:12.5px;font-weight:600;color:var(--accent);letter-spacing:.3px}
+.verdict .head{font-family:var(--display);font-weight:700;font-size:26px;line-height:1.2;text-wrap:balance;margin-block:2px 8px}
+.orders{display:flex;flex-direction:column;gap:8px}
+.order{border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:4px;background:var(--bg)}
+.order .top{display:flex;justify-content:space-between;gap:8px;align-items:baseline;flex-wrap:wrap}
+.order .tk{font-family:var(--mono);font-weight:600;font-size:16px}
+.kv{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12.5px;color:var(--ink2)}
+.kv b{font-weight:600;color:var(--ink)}
+.mkt{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13px;color:var(--ink2);border-top:1px solid var(--line);padding-top:10px;margin-top:12px}
+.mkt b{color:var(--ink);font-weight:600}
+
+/* the line of stations */
+.line{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:0;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);overflow:hidden}
+.st{background:none;border:0;border-inline-start:1px solid var(--line);padding:11px 10px 10px;text-align:start;cursor:pointer;display:flex;flex-direction:column;gap:2px;min-width:0;position:relative}
+.st:first-child{border-inline-start:0}
+.st .role{font-weight:700;font-size:13.5px}
+.st .job{font-size:11.5px;color:var(--muted);line-height:1.35}
+.st .stat{font-size:13px;font-weight:600;margin-top:5px;color:var(--ink)}
+.st[aria-pressed="true"]{background:var(--accent-soft)}
+.st[aria-pressed="true"]::after{content:"";position:absolute;inset-inline:0;bottom:0;height:3px;background:var(--accent)}
+.stbody{display:flex;flex-direction:column;gap:10px}
+.items{display:flex;flex-direction:column;gap:0;border-top:1px solid var(--line)}
+.item{display:grid;grid-template-columns:74px 92px minmax(0,1fr);gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:13.5px;align-items:baseline}
+.item .tk{font-family:var(--mono);font-weight:600}
+.chip{display:inline-flex;align-items:center;gap:5px;border-radius:5px;padding:1px 7px;font-size:12px;font-weight:600;background:var(--sunk);color:var(--ink2);white-space:nowrap}
+.chip.setup{background:var(--accent-soft);color:var(--accent)}
+.chip.ok{background:var(--good-soft);color:var(--good-ink)} .chip.no{background:var(--bad-soft);color:var(--bad-ink)} .chip.hm{background:var(--warn-soft);color:var(--warn-ink)}
+.src{font-size:12px;color:var(--muted)} .src a{margin-inline-end:8px}
+
+/* scanner table */
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th{font-weight:600;color:var(--muted);font-size:11.5px;text-align:start;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap;background:var(--surface)}
+td{padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:middle;white-space:nowrap}
+tr:last-child td{border-bottom:0}
+tbody tr.row{cursor:pointer}
+tbody tr.row:hover{background:var(--bg)}
+tbody tr.row[aria-selected="true"]{background:var(--accent-soft)}
+td.tk{font-family:var(--mono);font-weight:600;font-size:13.5px}
+td .nm{display:block;font-family:var(--body);font-weight:400;color:var(--muted);font-size:11.5px;max-width:150px;overflow:hidden;text-overflow:ellipsis}
+.score{display:flex;align-items:center;gap:7px}
+.score .bar{width:54px;height:6px;background:var(--sunk);border-radius:3px;overflow:hidden;direction:ltr}
+.score .bar span{display:block;height:100%;background:var(--accent)}
+.cats{display:inline-grid;grid-template-columns:repeat(12,7px);gap:2px;direction:ltr;align-items:end;height:18px}
+.cats span{background:var(--accent);opacity:.85;border-radius:1px 1px 0 0;min-height:2px}
+.up{color:var(--good-ink)} .dn{color:var(--bad-ink)}
+.sym{display:inline-block;width:16px;text-align:center;font-weight:700}
+.more{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:6px 14px;cursor:pointer;font-weight:600;font-size:13px;color:var(--accent)}
+.legend-row{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:12px;color:var(--muted)}
+
+/* ticker detail */
+.detail{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:20px;align-items:start}
+.dhead{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:baseline}
+.dhead .tk{font-family:var(--mono);font-size:22px;font-weight:600}
+.grid300{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px 14px}
+.grp .gh{display:flex;justify-content:space-between;font-size:12px;color:var(--ink2);margin-bottom:4px;font-weight:600}
+.cells{display:grid;grid-template-columns:repeat(10,1fr);gap:3px;direction:ltr}
+.cell{aspect-ratio:1;border-radius:2px;border:0;padding:0;cursor:pointer;background:var(--good)}
+.cell.f{background:transparent;box-shadow:inset 0 0 0 2px var(--bad)}
+.cell.u{background:transparent;box-shadow:inset 0 0 0 1px var(--muted);opacity:.6}
+.cell.on{outline:2px solid var(--ink);outline-offset:1px}
+.probe{min-height:44px;background:var(--sunk);border-radius:8px;padding:9px 12px;font-size:13px}
+.fails{columns:2;column-gap:20px;font-size:12.5px;color:var(--ink2);padding:0;margin:0;list-style:none}
+.fails li{break-inside:avoid;padding:2px 0}
+.fails .c{color:var(--muted);font-family:var(--mono);font-size:11px;margin-inline-end:5px}
+details>summary{cursor:pointer;color:var(--accent);font-weight:600;font-size:13px}
+.plan{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:8px}
+.tile{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;display:flex;flex-direction:column;gap:1px;min-width:0}
+.tile .l{font-size:11.5px;color:var(--muted)}
+.tile .v{font-family:var(--mono);font-size:16px;font-weight:600;direction:ltr;text-align:end;unicode-bidi:isolate}
+.tile .d{font-size:11.5px;color:var(--ink2)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+.voices{display:flex;flex-direction:column;gap:8px}
+.voice{border-inline-start:3px solid var(--line);padding-inline-start:10px;font-size:13.5px}
+.voice .w{font-weight:700;font-size:12.5px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
+/* charts */
+.chart{direction:ltr;position:relative}
+.chart svg{display:block;width:100%;height:auto}
+.chart text{font-family:var(--mono);font-size:11px;fill:var(--muted)}
+.chart .lbl{fill:var(--ink2)}
+.legend{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:12.5px;color:var(--ink2);direction:rtl;margin-bottom:6px}
+.legend i{display:inline-block;width:14px;height:3px;border-radius:2px;vertical-align:middle;margin-inline-end:6px}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--surface);border-radius:6px;padding:6px 9px;font-size:12px;font-family:var(--mono);white-space:nowrap;z-index:3;top:4px}
+.tip i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
+.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.crit{display:flex;flex-direction:column;gap:0;border-top:1px solid var(--line)}
+.crit div{display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);font-size:13.5px;align-items:baseline}
+.rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.rules ul,.rules ol{margin:6px 0 0;padding-inline-start:18px;font-size:13.5px;color:var(--ink2)}
+.rules li{margin-bottom:3px}
+.loglist{display:flex;flex-direction:column}
+.logrow{display:grid;grid-template-columns:96px 84px minmax(0,1fr);gap:12px;padding:10px 0;border-bottom:1px solid var(--line);font-size:13.5px;align-items:baseline}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+@media (max-width:860px){
+  .verdict,.detail,.two{grid-template-columns:minmax(0,1fr)}
+  .line{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .st{border-inline-start:0;border-top:1px solid var(--line)} .st:nth-child(-n+2){border-top:0} .st:nth-child(even){border-inline-start:1px solid var(--line)}
+  .st:last-child{grid-column:1/-1}
+  .mast h1{font-size:25px} .verdict .head{font-size:22px}
+  .item{grid-template-columns:64px minmax(0,1fr)} .item .txt{grid-column:1/-1}
+  .fails{columns:1}
+  .logrow{grid-template-columns:86px minmax(0,1fr)} .logrow .txt{grid-column:1/-1}
+}
+@media (prefers-reduced-motion:no-preference){ .st,.row{transition:background .12s} }
+</style>
+
+<div class="wrap" dir="rtl" lang="he">
+  <header class="mast">
+    <div>
+      <h1>צוות הסווינג</h1>
+      <p class="sub">שישה תפקידים, 300 בודקים ובוס אחד. כיס של 10,000 דולר, כרגע על הנייר.</p>
+    </div>
+    <div class="meta" id="meta"><span class="pill paper">מסחר על הנייר בלבד</span></div>
+  </header>
+  <nav class="tabs" role="tablist" id="tabs">
+    <button role="tab" data-tab="today" id="tab-today">היום</button>
+    <button role="tab" data-tab="paper" id="tab-paper">תיק הנייר</button>
+    <button role="tab" data-tab="evidence" id="tab-evidence">מה אומרת ההיסטוריה</button>
+    <button role="tab" data-tab="log" id="tab-log">יומן החלטות</button>
+    <button role="tab" data-tab="rules" id="tab-rules">ספר החוקים</button>
+  </nav>
+  <main id="view" class="view"><div class="empty">טוען את נתוני הצוות…</div></main>
+  <footer class="mut">הלוח מציג מחקר ותרגול על הנייר. הוא לא ייעוץ השקעות ולא מבצע שום פעולה בכסף אמיתי.</footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+var S={all:false,tab:"today",latest:null,paper:null,bt:null,cat:null,runs:null,sel:null,station:"boss",probe:null,db:false,ready:false};
+var $=function(id){return document.getElementById(id)};
+function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
+function num(x,d){if(x==null||isNaN(x))return"–";return Number(x).toLocaleString("en-US",{minimumFractionDigits:d==null?2:d,maximumFractionDigits:d==null?2:d})}
+function n(x,d,suf){return'<span class="n">'+num(x,d)+(suf||"")+'</span>'}
+function pct(x,d){if(x==null||isNaN(x))return'<span class="n">–</span>';var c=x>0?"up":x<0?"dn":"";return'<span class="n '+c+'">'+(x>0?"+":"")+num(x,d==null?1:d)+'%</span>'}
+function usd(x,d){if(x==null||isNaN(x))return'<span class="n">–</span>';return'<span class="n">$'+num(x,d==null?0:d)+'</span>'}
+function rr(x){if(x==null||isNaN(x))return'<span class="n">–</span>';var c=x>0?"up":x<0?"dn":"";return'<span class="n '+c+'">'+(x>0?"+":"")+num(x,2)+'R</span>'}
+function dateHe(d){if(!d)return"–";var p=String(d).slice(0,10).split("-");return'<span class="n">'+Number(p[2])+"."+Number(p[1])+"."+p[0]+'</span>'}
+function link(s){return s&&/^https:\/\//.test(s.url||"")?'<a href="'+esc(s.url)+'" target="_blank" rel="noopener">'+esc(s.title||"מקור")+'</a>':esc(s&&s.title||"")}
+var REG={green:"משטר ירוק",yellow:"משטר צהוב",red:"משטר אדום"};
+var STATIONS=[
+ ["scanner","הסורק","פותח את היום בטבלה"],
+ ["tagger","מתייג הסטאפים","מתאים סטאפ לפי החוקים"],
+ ["news","קורא החדשות","דוחות, כותרות, אירועים"],
+ ["money","עוקב הכסף הגדול","בעלי עניין, קרנות, נפח"],
+ ["checkers","300 הבודקים","כל אחד בודק דבר אחד"],
+ ["skeptic","המפקפק","מחפש למה זה ייכשל"],
+ ["boss","הבוס","רוצה כן, כפוף לחוקים"]];
+var VERD={ok:["ok","נקי"],caution:["hm","זהירות"],block:["no","פוסל"],support:["ok","מחזק"],neutral:["","ניטרלי"],against:["no","נגד"],veto:["no","וטו"],doubt:["hm","ספק"],pass:["ok","עובר"]};
+function chipV(v){var x=VERD[v];return x?'<span class="chip '+x[0]+'">'+x[1]+'</span>':""}
+function setupName(id){var c=S.cat&&S.cat.setups||[];for(var i=0;i<c.length;i++)if(c[i].id===id)return c[i].name;return id}
+function watchName(id){return S.cat&&S.cat.watch&&S.cat.watch[id]||id}
+
+/* ---------- chart ---------- */
+function niceTicks(lo,hi,k){var span=hi-lo||1,step=Math.pow(10,Math.floor(Math.log10(span/k))),e=span/k/step;step*=e>=5?10:e>=2?5:e>=1?2:1;var t=[],v=Math.ceil(lo/step)*step;for(;v<=hi+1e-9;v+=step)t.push(v);return t}
+function kfmt(v){return Math.abs(v)>=1000?"$"+(v/1000).toFixed(v%1000?1:0)+"K":"$"+v}
+function lineChart(host,labels,series){
+  var W=720,H=250,L=46,R=14,T=10,B=24,vals=[];
+  series.forEach(function(s){s.values.forEach(function(v){if(v!=null)vals.push(v)})});
+  if(vals.length<2){host.innerHTML='<div class="empty">הגרף יופיע אחרי שיצטברו לפחות שני ימי נתונים.</div>';return}
+  var lo=Math.min.apply(null,vals),hi=Math.max.apply(null,vals),pad=(hi-lo)*0.08||50;lo-=pad;hi+=pad;
+  var ticks=niceTicks(lo,hi,4),N=labels.length;
+  var X=function(i){return L+(W-L-R)*(N>1?i/(N-1):0)},Y=function(v){return T+(H-T-B)*(1-(v-lo)/(hi-lo))};
+  var g='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="גרף שווי לאורך זמן">';
+  ticks.forEach(function(t){g+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+Y(t)+'" y2="'+Y(t)+'" stroke="var(--grid)" stroke-width="1"/><text x="'+(L-6)+'" y="'+(Y(t)+4)+'" text-anchor="end">'+kfmt(t)+'</text>'});
+  var nx=Math.min(5,N),seen={};for(var k=0;k<nx;k++){var i=Math.round(k*(N-1)/Math.max(nx-1,1));if(seen[i])continue;seen[i]=1;g+='<text x="'+X(i)+'" y="'+(H-6)+'" text-anchor="'+(k===0?"start":k===nx-1?"end":"middle")+'">'+esc(String(labels[i]).slice(2))+'</text>'}
+  series.forEach(function(s){var d="",pen=false,last=null;s.values.forEach(function(v,i){if(v==null){pen=false;return}d+=(pen?"L":"M")+X(i).toFixed(1)+" "+Y(v).toFixed(1);pen=true;last=i});
+    g+='<path d="'+d+'" fill="none" stroke="var('+s.color+')" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>';
+    if(last!=null)g+='<circle cx="'+X(last)+'" cy="'+Y(s.values[last])+'" r="4" fill="var('+s.color+')" stroke="var(--surface)" stroke-width="2"/>'});
+  g+='<line id="xh" y1="'+T+'" y2="'+(H-B)+'" stroke="var(--axis)" stroke-width="1" visibility="hidden"/><rect x="'+L+'" y="'+T+'" width="'+(W-L-R)+'" height="'+(H-T-B)+'" fill="transparent" id="hit"/></svg>';
+  var leg='<div class="legend">'+series.map(function(s){var lastv=null;for(var i=s.values.length-1;i>=0;i--)if(s.values[i]!=null){lastv=s.values[i];break}return'<span><i style="background:var('+s.color+')"></i>'+esc(s.name)+' · <span class="n">$'+num(lastv,0)+'</span></span>'}).join("")+'</div>';
+  var step=Math.max(1,Math.ceil(N/26)),rows="";for(var j=N-1;j>=0;j-=step)rows+='<tr><td class="n">'+esc(labels[j])+'</td>'+series.map(function(s){return'<td class="n">'+(s.values[j]==null?"–":"$"+num(s.values[j],0))+'</td>'}).join("")+'</tr>';
+  host.innerHTML=leg+'<div class="chart">'+g+'<div class="tip" hidden></div></div><details style="margin-top:8px"><summary>הנתונים בטבלה</summary><div class="tbl" style="margin-top:8px"><table><thead><tr><th>תאריך</th>'+series.map(function(s){return'<th>'+esc(s.name)+'</th>'}).join("")+'</tr></thead><tbody>'+rows+'</tbody></table></div></details>';
+  var box=host.querySelector(".chart"),svg=box.querySelector("svg"),tip=box.querySelector(".tip"),xh=svg.querySelector("#xh"),hit=svg.querySelector("#hit");
+  function move(ev){var r=svg.getBoundingClientRect(),px=(ev.clientX-r.left)/r.width*W,i=Math.round((px-L)/(W-L-R)*(N-1));i=Math.max(0,Math.min(N-1,i));
+    xh.setAttribute("x1",X(i));xh.setAttribute("x2",X(i));xh.setAttribute("visibility","visible");
+    tip.innerHTML=esc(labels[i])+"<br>"+series.map(function(s){return'<i style="background:var('+s.color+')"></i>'+esc(s.short||s.name)+" "+(s.values[i]==null?"–":"$"+num(s.values[i],0))}).join("<br>");
+    tip.hidden=false;var left=X(i)/W*r.width;tip.style.left=(left>r.width*0.6?left-tip.offsetWidth-10:left+10)+"px"}
+  hit.addEventListener("pointermove",move);hit.addEventListener("pointerdown",move);
+  hit.addEventListener("pointerleave",function(){tip.hidden=true;xh.setAttribute("visibility","hidden")});
+}
+function tile(l,v,d){return'<div class="tile"><span class="l">'+l+'</span><span class="v">'+v+'</span>'+(d?'<span class="d">'+d+'</span>':"")+'</div>'}
+
+/* ---------- header ---------- */
+function renderMeta(){
+  var L=S.latest,h='<span class="pill paper">מסחר על הנייר בלבד</span>';
+  if(L){var r=L.regime||{};h='<span class="pill '+esc(r.label)+'"><i></i>'+(REG[r.label]||"")+'</span>'+h+'<span>נתוני סגירה: '+dateHe(L.date)+'</span>'}
+  $("meta").innerHTML=h;
+}
+
+/* ---------- today ---------- */
+function viewToday(){
+  var L=S.latest;
+  if(!L)return'<div class="empty"><b>עוד לא הייתה ריצה של הצוות.</b><br>אחרי הריצה הראשונה יופיעו כאן החלטת הבוס, שבע התחנות וטבלת הסורק.</div>';
+  var A=L.agents||{},boss=A.boss||{},r=L.regime||{},h="";
+  var age=(Date.now()-Date.parse(L.date+"T21:00:00Z"))/864e5;
+  if(age>4.5)h+='<div class="warnbar">הנתונים כאן מיום '+dateHe(L.date)+'. הריצה היומית לא עדכנה את הלוח מאז.</div>';
+  var orders=(boss.orders||[]).map(function(o){return'<div class="order"><div class="top"><span class="tk">'+esc(o.t)+'</span><span class="chip setup">'+esc(setupName(o.setup))+'</span></div>'+
+    '<div class="kv"><span>ייחוס <b>'+usd(o.ref_close,2)+'</b></span><span>סטופ <b>'+usd(o.stop,2)+'</b></span><span>יעד <b>'+usd(o.target,2)+'</b></span><span>לא לקנות מעל <b>'+usd(o.max_entry,2)+'</b></span><span>כמות <b>'+n(o.shares,0)+'</b></span><span>סיכון <b>'+usd(o.risk_usd,0)+'</b></span></div>'+
+    (o.note?'<div class="sub">'+esc(o.note)+'</div>':"")+'</div>'}).join("");
+  h+='<section class="card verdict"><div><div class="who">החלטת הבוס</div><div class="head">'+esc(boss.headline||"אין החלטה רשומה")+'</div><p class="sub">'+esc(boss.summary||"")+'</p>'+
+    '<div class="mkt"><span>SPY <b>'+usd(r.spy,2)+'</b> '+pct(r.spy_chg,2)+'</span><span>מול ממוצע 50 <b>'+pct(r.spy_vs_sma50)+'</b></span><span>מול ממוצע 200 <b>'+pct(r.spy_vs_sma200)+'</b></span><span>VIX <b>'+n(r.vix,1)+'</b></span><span>מניות מעל ממוצע 50 <b>'+n(r.breadth50,0,"%")+'</b></span><span>בדיקות שוק <b>'+n(r.market_checks_passed,0)+'/'+n(r.market_checks_total,0)+'</b></span></div></div>'+
+    '<div class="orders"><h3>'+(orders?"הזמנות לפתיחה הבאה (נייר)":"אין הזמנות חדשות")+'</h3>'+(orders||'<p class="sub">יום בלי עסקה הוא תוצאה תקינה. הבוס לא מאשר כשהחוקים, החדשות או המפקפק עוצרים.</p>')+
+    ((boss.passed_on||[]).length?'<details><summary>מה נדחה ולמה ('+boss.passed_on.length+')</summary><div class="items" style="margin-top:6px">'+boss.passed_on.map(function(p){return'<div class="item"><span class="tk">'+esc(p.t)+'</span><span></span><span class="txt">'+esc(p.why)+'</span></div>'}).join("")+'</div></details>':"")+'</div></section>';
+  // stations
+  h+='<section><div class="line" role="group" aria-label="תחנות הצוות">'+STATIONS.map(function(s){var a=A[s[0]]||{};return'<button class="st" data-st="'+s[0]+'" aria-pressed="'+(S.station===s[0])+'"><span class="role">'+s[1]+'</span><span class="job">'+s[2]+'</span><span class="stat">'+esc(a.stat||"–")+'</span></button>'}).join("")+'</div></section>';
+  var st=A[S.station]||{},meta=STATIONS.filter(function(s){return s[0]===S.station})[0];
+  var items=(st.items||[]).map(function(it){var mid=it.setup?'<span class="chip setup">'+esc(setupName(it.setup))+(it.grade?" · "+esc(it.grade):"")+'</span>':chipV(it.verdict);
+    return'<div class="item"><span class="tk">'+esc(it.t)+'</span><span>'+mid+'</span><span class="txt">'+esc(it.note||"")+(it.earnings?' <span class="mut">דוח: '+dateHe(it.earnings)+'</span>':"")+((it.sources||[]).length?'<div class="src">'+it.sources.map(link).join("")+'</div>':"")+'</span></div>'}).join("");
+  h+='<section class="card stbody"><h2>'+meta[1]+'</h2><p class="sub">'+esc(st.summary||"אין דיווח מהתחנה הזו בריצה האחרונה.")+'</p>'+(items?'<div class="items">'+items+'</div>':"")+'</section>';
+  // table
+  var T=L.table||[],appr={};(boss.orders||[]).forEach(function(o){appr[o.t]=1});
+  var vmap=function(key){var m={};((A[key]||{}).items||[]).forEach(function(i){m[i.t]=i.verdict});return m},nv=vmap("news"),mv=vmap("money"),sv=vmap("skeptic");
+  var sym=function(v){return v==="ok"||v==="support"||v==="pass"?'<span class="sym up" title="עובר">✓</span>':v==="block"||v==="veto"||v==="against"?'<span class="sym dn" title="נעצר">✕</span>':v?'<span class="sym" title="ספק">?</span>':'<span class="sym mut">·</span>'};
+  if(!S.sel||!T.some(function(x){return x.t===S.sel}))S.sel=(boss.orders&&boss.orders[0]&&boss.orders[0].t)||(T[0]&&T[0].t)||null;
+  var catIds=(S.cat&&S.cat.categories||[]).map(function(c){return c.id});
+  var shown=S.all?T:T.filter(function(x,i){return i<15||x.t===S.sel||appr[x.t]});
+  var rows=shown.map(function(x){var cats=x.cats||{},keys=catIds.length?catIds:Object.keys(cats);
+    return'<tr class="row" data-t="'+esc(x.t)+'" aria-selected="'+(x.t===S.sel)+'" tabindex="0"><td class="n">'+x.rank+'</td><td class="tk">'+esc(x.t)+(appr[x.t]?' <span class="chip ok">אושרה</span>':"")+'<span class="nm">'+esc(x.name)+'</span></td>'+
+    '<td>'+((x.setups||[]).map(function(s){return'<span class="chip setup">'+esc(setupName(s))+'</span>'}).join(" ")||(x.watch||[]).map(function(w){return'<span class="chip">'+esc(watchName(w))+'</span>'}).join(" ")||'<span class="mut">–</span>')+'</td>'+
+    '<td><div class="score">'+n(x.score,0)+'<span class="bar"><span style="width:'+Math.max(0,Math.min(100,x.score))+'%"></span></span></div></td>'+
+    '<td><span class="cats" title="12 קטגוריות, מ-מגמה עד דגלים אדומים">'+keys.map(function(k){return'<span style="height:'+Math.max(2,Math.round((cats[k]||0)*0.18))+'px"></span>'}).join("")+'</span></td>'+
+    '<td>'+usd(x.price,2)+'</td><td>'+pct(x.chg,2)+'</td><td>'+n(x.m&&x.m.rk63,0)+'</td><td>'+n(x.m&&x.m.rvol,1)+'</td><td>'+(x.plan?pct(-x.plan.risk_pct):"–")+'</td>'+
+    '<td>'+sym(nv[x.t])+sym(mv[x.t])+sym(sv[x.t])+'</td></tr>'}).join("");
+  var sg=L.signals_today||{},u=L.universe||{};
+  h+='<section style="display:flex;flex-direction:column;gap:8px"><div style="display:flex;justify-content:space-between;gap:8px 20px;flex-wrap:wrap;align-items:baseline"><h2>הטבלה של הסורק</h2>'+
+    '<span class="sub">'+n(u.loaded,0)+' מניות נסרקו · '+n(u.passed_gates,0)+' עברו סף נזילות · '+Object.keys(sg).filter(function(k){return sg[k]}).map(function(k){return esc(setupName(k))+" "+sg[k]}).join(" · ")+'</span></div>'+
+    '<div class="tbl"><table><thead><tr><th>#</th><th>מניה</th><th>סטאפ</th><th>ציון 300</th><th>12 קטגוריות</th><th>מחיר</th><th>יומי</th><th>דירוג RS</th><th>נפח יחסי</th><th>מרחק לסטופ</th><th title="חדשות, כסף גדול, מפקפק">ח · כ · מ</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
+    (T.length>shown.length||S.all?'<div><button class="more" id="more">'+(S.all?"להציג רק את 15 הראשונות":"להציג את כל "+T.length+" השורות")+'</button></div>':"")+
+    '<div class="legend-row"><span>ציון 300: אחוז הבדיקות שעברו מתוך אלה שיש להן נתון</span><span>ח · כ · מ: חדשות, כסף גדול, מפקפק</span><span>לוחצים על שורה כדי לראות את 300 הבודקים</span></div></section>';
+  h+='<section class="card" id="detail">'+detail()+'</section>';
+  return h;
+}
+function detail(){
+  var L=S.latest,x=null;(L.table||[]).forEach(function(r){if(r.t===S.sel)x=r});
+  if(!x)return'<div class="empty">בחרו מניה מהטבלה.</div>';
+  var cat=S.cat,lift={};(S.bt&&S.bt.check_lift||[]).forEach(function(c){lift[c.id]=c});
+  var left='<div style="display:flex;flex-direction:column;gap:12px;min-width:0"><div class="dhead"><span class="tk">'+esc(x.t)+'</span><span>'+esc(x.name)+'</span><span class="mut">'+esc(x.sector||"")+'</span></div>'+
+    '<p class="sub">עברו <b>'+x.passed+'</b> בדיקות, נכשלו <b>'+x.failed+'</b>, בלי נתון <b>'+x.unknown+'</b>. ריבוע מלא עבר, מסגרת אדומה נכשל, מסגרת דקה אין נתון.</p>';
+  if(cat&&cat.checks&&x.bits){
+    var by={};cat.checks.forEach(function(c,i){(by[c.cat]=by[c.cat]||[]).push(i)});
+    left+='<div class="grid300">'+cat.categories.map(function(c){var ix=by[c.id]||[],p=0;ix.forEach(function(i){if(x.bits[i]==="1")p++});
+      return'<div class="grp"><div class="gh"><span>'+esc(c.name)+'</span><span class="n">'+p+'/'+ix.length+'</span></div><div class="cells">'+ix.map(function(i){var b=x.bits[i];return'<button class="cell '+(b==="1"?"p":b==="0"?"f":"u")+(S.probe===i?" on":"")+'" data-i="'+i+'" aria-label="'+esc(cat.checks[i].name)+'"></button>'}).join("")+'</div></div>'}).join("")+'</div>';
+    var pr='לחצו על ריבוע כדי לראות מה הבודק הזה בדק.';
+    if(S.probe!=null&&cat.checks[S.probe]){var c=cat.checks[S.probe],b=x.bits[S.probe],lf=lift[c.id];
+      pr='<b>'+esc(c.name)+'</b> <span class="chip '+(b==="1"?"ok":b==="0"?"no":"")+'">'+(b==="1"?"עבר":b==="0"?"נכשל":"אין נתון")+'</span>'+
+        (lf&&lf.edge!=null?'<div class="mut">בהיסטוריה: 10 ימים אחרי, מי שעבר את הבדיקה עשה '+(lf.edge>0?"+":"")+num(lf.edge,2)+'% '+(lf.mode==="market"?"(תשואת היקום, ימים שעבר מול ימים שנכשל)":"מול מי שנכשל")+'. מובהקות t='+num(lf.t,1)+'.</div>':'<div class="mut">אין מספיק היסטוריה כדי למדוד את הבדיקה הזו.</div>')}
+    left+='<div class="probe" id="probe">'+pr+'</div>';
+    var fl=cat.checks.map(function(c,i){return x.bits[i]==="0"?'<li><span class="c">'+c.id+'</span>'+esc(c.name)+'</li>':""}).join("");
+    left+='<details><summary>כל הבדיקות שנכשלו ('+x.failed+')</summary><ul class="fails" style="margin-top:8px">'+fl+'</ul></details>';
+  }else left+='<div class="empty">קטלוג הבדיקות עוד לא נטען.</div>';
+  left+='</div>';
+  var p=x.plan,m=x.m||{},A=L.agents||{},right='<div style="display:flex;flex-direction:column;gap:12px;min-width:0">';
+  if(p){right+='<h3>'+(p.provisional?"תוכנית זמנית (אין סטאפ היום)":"התוכנית לפי "+esc(setupName(p.setup)))+'</h3><div class="plan">'+
+    tile("סגירת ייחוס","$"+num(p.ref_close,2))+tile("סטופ","$"+num(p.stop,2),"‎-"+num(p.risk_pct,1)+"%")+tile("יעד "+num(p.rr,1)+"R","$"+num(p.target,2))+
+    tile("לא לקנות מעל","$"+num(p.max_entry,2))+tile("כמות",num(p.shares,0),"$"+num(p.position_usd,0))+tile("סיכון","$"+num(p.risk_usd,0),"יציאה אחרי "+p.time_stop_days+" ימים")+'</div>'}
+  right+='<div class="kv"><span>דירוג RS <b>'+n(m.rk63,0)+'</b></span><span>נפח יחסי <b>'+n(m.rvol,1)+'</b></span><span>ATR <b>'+n(m.atrp,1,"%")+'</b></span><span>RSI <b>'+n(m.rsi14,0)+'</b></span><span>חודש <b>'+pct(m.ret21)+'</b></span><span>רבעון <b>'+pct(m.ret63)+'</b></span><span>מהשיא השנתי <b>'+pct(m.dist52h)+'</b></span><span>מחזור <b><span class="n">$'+num(m.dv20m,0)+'M</span></b></span>'+
+    (m.earn_date?'<span>דוח הבא <b>'+dateHe(m.earn_date)+'</b></span>':'<span>דוח הבא <b>לא ידוע</b></span>')+(m.mcap_b?'<span>שווי <b><span class="n">$'+num(m.mcap_b,1)+'B</span></b></span>':"")+'</div>';
+  var voices=[["tagger","מתייג הסטאפים"],["news","קורא החדשות"],["money","עוקב הכסף הגדול"],["skeptic","המפקפק"]].map(function(v){var it=null;((A[v[0]]||{}).items||[]).forEach(function(i){if(i.t===x.t)it=i});
+    return it?'<div class="voice"><div class="w">'+v[1]+" "+(it.setup?'<span class="chip setup">'+esc(setupName(it.setup))+(it.grade?" · "+esc(it.grade):"")+'</span>':chipV(it.verdict))+'</div><div>'+esc(it.note||"")+'</div>'+((it.sources||[]).length?'<div class="src">'+it.sources.map(link).join("")+'</div>':"")+'</div>':""}).join("");
+  right+='<h3>מה הצוות אמר</h3><div class="voices">'+(voices||'<p class="sub">המניה לא הגיעה לרשימה הקצרה, ולכן רק 300 הבודקים עברו עליה.</p>')+'</div></div>';
+  return'<div class="detail">'+left+right+'</div>';
+}
+
+/* ---------- paper ---------- */
+function viewPaper(){
+  var P=S.paper;
+  if(!P||!P.stats)return'<div class="empty"><b>תיק הנייר עוד לא נפתח.</b><br>הוא מתחיל ב-10,000 דולר וירטואליים בריצה הראשונה. כאן יופיעו השווי מול SPY, הפוזיציות, העסקאות הסגורות והתנאים למעבר לכסף אמיתי.</div>';
+  var s=P.stats,g=P.go_live||{},h="";
+  h+='<div class="tiles">'+tile("שווי התיק","$"+num(s.equity,0),"התחיל ב-$"+num(P.start_equity,0))+tile("תשואה",(s.return_pct>0?"+":"")+num(s.return_pct,1)+"%","SPY: "+(s.spy_return_pct==null?"–":(s.spy_return_pct>0?"+":"")+num(s.spy_return_pct,1)+"%"))+
+    tile("עסקאות סגורות",num(s.closed,0),s.win_rate==null?"":num(s.win_rate,0)+"% הצלחה")+tile("תוחלת לעסקה",s.expectancy_r==null?"–":(s.expectancy_r>0?"+":"")+num(s.expectancy_r,2)+"R","אחרי עמלות")+
+    tile("ירידה מקסימלית",num(s.max_dd_pct,1)+"%")+tile("סיכון פתוח","$"+num(s.open_risk_usd,0),num(s.open,0)+" פוזיציות")+'</div>';
+  if(s.paused)h+='<div class="warnbar">התיק בהשהיה: ירידה חדה מהשיא. אין כניסות חדשות עד בדיקה ידנית.</div>';
+  h+='<section class="two"><div class="card"><h2>התיק מול SPY</h2><p class="sub" style="margin-bottom:8px">מאז '+dateHe(P.start_date)+'. שני הקווים מתחילים מאותו סכום.</p><div id="ch-paper"></div></div>'+
+    '<div class="card"><h2>מתי עוברים לכסף אמיתי</h2><p class="sub">כל חמשת התנאים, לא חלק מהם. '+(g.ready?"כולם מתקיימים. ההחלטה אצלך.":"עוד לא.")+'</p><div class="crit" style="margin-top:8px">'+(g.criteria||[]).map(function(c){return'<div><span class="sym '+(c.ok?"up":"dn")+'">'+(c.ok?"✓":"✕")+'</span><span>'+esc(c.name)+'</span><span class="n">'+(c.value==null?"–":num(c.value,c.value%1?1:0))+'</span></div>'}).join("")+'</div><p class="mut" style="margin-top:8px">'+esc(g.next||"")+'</p></div></section>';
+  var pos=(P.positions||[]).map(function(p){var pl=p.shares*(p.last-p.entry),r=p.risk_usd?pl/p.risk_usd:null;return'<tr><td class="tk">'+esc(p.t)+'</td><td><span class="chip setup">'+esc(setupName(p.setup))+'</span></td><td>'+dateHe(p.entry_date)+'</td><td>'+n(p.shares,0)+'</td><td>'+usd(p.entry,2)+'</td><td>'+usd(p.last,2)+'</td><td>'+usd(p.stop,2)+'</td><td>'+usd(p.target,2)+'</td><td>'+rr(r)+'</td><td class="n">'+p.days+'/'+p.tmax+'</td></tr>'}).join("");
+  h+='<section style="display:flex;flex-direction:column;gap:8px"><h2>פוזיציות פתוחות</h2>'+(pos?'<div class="tbl"><table><thead><tr><th>מניה</th><th>סטאפ</th><th>כניסה</th><th>כמות</th><th>מחיר כניסה</th><th>אחרון</th><th>סטופ</th><th>יעד</th><th>כרגע</th><th>ימים</th></tr></thead><tbody>'+pos+'</tbody></table></div>':'<div class="empty">אין פוזיציות פתוחות.</div>')+'</section>';
+  var pen=(P.pending||[]).map(function(p){return'<tr><td class="tk">'+esc(p.t)+'</td><td><span class="chip setup">'+esc(setupName(p.setup))+'</span></td><td>'+dateHe(p.decided)+'</td><td>'+usd(p.stop,2)+'</td><td>'+usd(p.max_entry,2)+'</td><td>'+esc(p.note||"")+'</td></tr>'}).join("");
+  if(pen)h+='<section style="display:flex;flex-direction:column;gap:8px"><h2>ממתינות לפתיחה הבאה</h2><div class="tbl"><table><thead><tr><th>מניה</th><th>סטאפ</th><th>הוחלט</th><th>סטופ</th><th>לא מעל</th><th>הערה</th></tr></thead><tbody>'+pen+'</tbody></table></div></section>';
+  var WHY={stop:"סטופ",target:"יעד",time:"זמן",boss:"החלטת הבוס"};
+  var cl=(P.closed||[]).slice().reverse().map(function(c){return'<tr><td class="tk">'+esc(c.t)+'</td><td><span class="chip setup">'+esc(setupName(c.setup))+'</span></td><td>'+dateHe(c.entry_date)+'</td><td>'+dateHe(c.exit_date)+'</td><td>'+usd(c.entry,2)+'</td><td>'+usd(c.exit,2)+'</td><td>'+(WHY[c.why]||esc(c.why))+'</td><td>'+usd(c.pnl,0)+'</td><td>'+rr(c.r)+'</td></tr>'}).join("");
+  h+='<section style="display:flex;flex-direction:column;gap:8px"><h2>עסקאות סגורות</h2>'+(cl?'<div class="tbl"><table><thead><tr><th>מניה</th><th>סטאפ</th><th>כניסה</th><th>יציאה</th><th>מחיר כניסה</th><th>מחיר יציאה</th><th>סיבה</th><th>רווח/הפסד</th><th>ב-R</th></tr></thead><tbody>'+cl+'</tbody></table></div>':'<div class="empty">עוד לא נסגרה עסקה. צריך 20 לפחות לפני שמסיקים משהו.</div>')+'</section>';
+  var cx=(P.cancelled||[]).concat((P.rejected||[]).map(function(r){return{t:r.t,date:r.date,why:"נדחתה: "+r.why}})).slice(-12).reverse().map(function(c){return'<div class="logrow"><span>'+dateHe(c.date)+'</span><span class="n" style="font-weight:600">'+esc(c.t)+'</span><span class="txt">'+esc(c.why)+'</span></div>'}).join("");
+  if(cx)h+='<section class="card"><h2>הזמנות שלא בוצעו</h2><div class="loglist">'+cx+'</div></section>';
+  return h;
+}
+/* ---------- evidence ---------- */
+function statRow(name,s,extra){s=s||{};return'<tr><td>'+name+'</td><td class="n">'+num(s.n,0)+'</td><td class="n">'+(s.win_rate==null?"–":num(s.win_rate,0)+"%")+'</td><td>'+rr(s.avg_r)+'</td><td class="n">'+(s.profit_factor==null?"–":num(s.profit_factor,2))+'</td><td class="n">'+(s.t_stat==null?"–":num(s.t_stat,1))+'</td>'+(extra||"")+'</tr>'}
+function viewEvidence(){
+  var B=S.bt;
+  if(!B||!B.portfolio)return'<div class="empty"><b>הבדיקה ההיסטורית עוד לא רצה.</b><br>אחרי ריצת המנוע הראשונה יופיע כאן מה כל סטאפ וכל אחד מ-300 הבודקים עשה בשנים האחרונות.</div>';
+  var p=B.portfolio,pa=B.portfolio_alt_fee||{},h="";
+  h+='<div class="note"><b>איך לקרוא את זה.</b> זו בדיקה על העבר, מ-'+dateHe(B.from)+' עד '+dateHe(B.to)+', ולא הבטחה. '+(B.caveats||[]).map(esc).join(" ")+'</div>';
+  h+='<section class="two"><div class="card"><h2>סימולציית התיק לפי ספר החוקים</h2><p class="sub" style="margin-bottom:8px">אותם חוקים, אותו כיס של 10,000 דולר, עמלה של '+usd(B.commission_usd,2)+' לפעולה.</p><div id="ch-bt"></div></div>'+
+    '<div class="card" style="display:flex;flex-direction:column;gap:10px"><h2>השורה התחתונה</h2><div class="tiles">'+tile("התיק",(p.return_pct>0?"+":"")+num(p.return_pct,1)+"%",num(p.years,1)+" שנים")+tile("SPY",(p.spy_return_pct>0?"+":"")+num(p.spy_return_pct,1)+"%","קנה והחזק")+
+    tile("היקום, משקל שווה",(p.universe_ew_return_pct>0?"+":"")+num(p.universe_ew_return_pct,1)+"%","אותה הטיית שרידות")+tile("ירידה מקסימלית",num(p.max_dd_pct,1)+"%","SPY: "+num(p.spy_max_dd_pct,1)+"%")+
+    tile("עסקאות",num(p.trades&&p.trades.n,0),p.trades&&p.trades.win_rate!=null?num(p.trades.win_rate,0)+"% הצלחה":"")+tile("תוחלת לעסקה",p.trades&&p.trades.avg_r!=null?(p.trades.avg_r>0?"+":"")+num(p.trades.avg_r,2)+"R":"–","אחרי עמלות")+'</div>'+
+    '<p class="sub">ימים עם פוזיציה פתוחה: '+n(p.days_in_market_pct,0,"%")+'. סך העמלות: '+usd(p.commission_total,0)+'.</p>'+
+    '<div class="note"><b>העמלה משנה הכול.</b> באותם חוקים עם עמלה של '+usd(B.alt_commission_usd,2)+' לפעולה: תשואה '+pct(pa.return_pct)+', תוחלת '+rr(pa.trades&&pa.trades.avg_r)+' לעסקה.</div></div></section>';
+  var ps=B.per_setup||{},alt=B.per_setup_alt_fee||{},rows="",order=["BRK","GAP","TGT","PB","MR"];
+  order.forEach(function(k){var v=ps[k];if(!v)return;var e=v.exits||{},reg=v.by_regime||{};rows+=statRow('<span class="chip setup">'+esc(setupName(k))+'</span>',v.all,'<td>'+rr(reg.green&&reg.green.avg_r)+'</td><td>'+rr(reg.yellow&&reg.yellow.avg_r)+'</td><td>'+rr(reg.red&&reg.red.avg_r)+'</td><td>'+rr(alt[k]&&alt[k].avg_r)+'</td><td class="n">'+num(e.target,0)+' / '+num(e.stop,0)+' / '+num(e.time,0)+'</td>')});
+  h+='<section style="display:flex;flex-direction:column;gap:8px"><h2>כל סטאפ בנפרד</h2><p class="sub">כל איתות נספר לבדו, בלי מגבלות התיק. תוחלת ב-R אחרי עמלות. t מעל 2 בערך אומר שקשה להסביר את התוצאה במזל בלבד.</p>'+
+    '<div class="tbl"><table><thead><tr><th>סטאפ</th><th>איתותים</th><th>הצלחה</th><th>תוחלת</th><th>מקדם רווח</th><th>t</th><th>בירוק</th><th>בצהוב</th><th>באדום</th><th>בעמלה '+'$'+num(B.alt_commission_usd,0)+'</th><th>יעד / סטופ / זמן</th></tr></thead><tbody>'+rows+'</tbody></table></div></section>';
+  var sc="";order.forEach(function(k){var v=ps[k]&&ps[k].by_score;if(!v)return;sc+='<tr><td><span class="chip setup">'+esc(setupName(k))+'</span></td><td class="n">'+num(v.median_score,0)+'</td><td>'+rr(v.above&&v.above.avg_r)+' <span class="mut n">('+num(v.above&&v.above.n,0)+')</span></td><td>'+rr(v.below&&v.below.avg_r)+' <span class="mut n">('+num(v.below&&v.below.n,0)+')</span></td></tr>'});
+  if(sc)h+='<section style="display:flex;flex-direction:column;gap:8px"><h2>האם ציון 300 עוזר?</h2><p class="sub">אותם איתותים, מחולקים לחצי עם ציון גבוה ולחצי עם ציון נמוך. אם הציון שווה משהו, החצי העליון צריך להיות טוב יותר.</p><div class="tbl"><table><thead><tr><th>סטאפ</th><th>ציון חציוני</th><th>ציון מעל החציון</th><th>ציון מתחת לחציון</th></tr></thead><tbody>'+sc+'</tbody></table></div></section>';
+  var lf=(B.check_lift||[]).filter(function(c){return c.t!=null}),nm={};(S.cat&&S.cat.checks||[]).forEach(function(c){nm[c.id]=c.name});
+  var srt=lf.slice().sort(function(a,b){return b.t-a.t}),strong=lf.filter(function(c){return Math.abs(c.t)>=2}).length;
+  var lrow=function(c){return'<tr><td class="n mut">'+c.id+'</td><td style="white-space:normal;min-width:190px">'+esc(nm[c.id]||c.id)+'</td><td>'+pct(c.edge,2)+'</td><td class="n">'+num(c.t,1)+'</td><td class="n">'+num(c.pass_rate,0)+'%</td></tr>'};
+  var head='<thead><tr><th></th><th>הבדיקה</th><th>יתרון ב-10 ימים</th><th>t</th><th>עוברים</th></tr></thead>';
+  if(srt.length)h+='<section style="display:flex;flex-direction:column;gap:8px"><h2>אילו בודקים באמת ניבאו משהו</h2><p class="sub">לכל בדיקה: התשואה ב-10 ימי המסחר שאחרי, מי שעבר מול מי שנכשל. מתוך '+lf.length+' בדיקות שאפשר למדוד, ל-'+strong+' יש t של 2 ומעלה בערך מוחלט. כשבודקים 300 דברים, כ-15 יצאו "מובהקים" גם במזל.</p>'+
+    '<div class="two"><div style="display:flex;flex-direction:column;gap:6px;min-width:0"><h3>12 שהכי עזרו</h3><div class="tbl"><table>'+head+'<tbody>'+srt.slice(0,12).map(lrow).join("")+'</tbody></table></div></div><div style="display:flex;flex-direction:column;gap:6px;min-width:0"><h3>12 שעבדו הפוך: מי שנכשל בהן הצליח יותר</h3><div class="tbl"><table>'+head+'<tbody>'+srt.slice(-12).reverse().map(lrow).join("")+'</tbody></table></div></div></div>'+
+    '<p class="mut">בדיקות שוק (משטר ורוחב) נמדדות על תשואת היקום כולו, ימים שעברו מול ימים שנכשלו.</p></section>';
+  return h;
+}
+/* ---------- log ---------- */
+function viewLog(){
+  var R=S.runs;
+  if(!R||!R.length)return'<div class="empty"><b>היומן ריק.</b><br>כל ריצה יומית מוסיפה כאן שורה: המשטר, החלטת הבוס ומה אושר.</div>';
+  return'<section class="card"><h2>יומן החלטות</h2><div class="loglist" style="margin-top:6px">'+R.map(function(r){var o=(r.orders||[]).map(function(x){return'<span class="chip ok">'+esc(x.t)+" · "+esc(setupName(x.setup))+'</span>'}).join(" ");
+    return'<div class="logrow"><span>'+dateHe(r.date)+'</span><span><span class="pill '+esc(r.regime)+'" style="font-size:12px;padding:1px 9px"><i></i>'+(REG[r.regime]||"").replace("משטר ","")+'</span></span><span class="txt"><b>'+esc(r.headline||"")+'</b> '+o+(r.vetoes?'<div class="mut">המפקפק עצר: '+esc(r.vetoes)+'</div>':"")+'</span></div>'}).join("")+'</div></section>';
+}
+/* ---------- rules ---------- */
+function viewRules(){
+  var C=S.cat||{},c=C.config||{},g=c.go_live||{},v=function(k,d,suf){return'<span class="n">'+(c[k]==null?d:c[k])+(suf||"")+'</span>'};
+  var setups=(C.setups||[]).map(function(s){return'<div class="card"><h3><span class="chip setup">'+esc(s.id)+'</span> '+esc(s.name)+'</h3><ul>'+(s.rules||[]).map(function(r){return'<li>'+esc(r)+'</li>'}).join("")+'</ul></div>'}).join("");
+  return'<div class="note">החוקים נכתבו לפני שנכנס דולר אחד, והם מחייבים גם את הבוס. הכיס הזה נפרד מהסלע הספקולטיבי ומהתיק הראשי.</div>'+
+  '<section class="rules"><div class="card"><h3>הכיס</h3><ul><li>עד '+usd(c.equity_usd||10000,0)+', מניות אמריקאיות בלבד, קנייה בלבד</li><li>בלי מינוף, בלי אופציות, בלי שורט</li><li>אופק עסקה: ימים עד שבועות</li><li>מחיר מעל 10 דולר ומחזור יומי מעל 20 מיליון דולר</li></ul></div>'+
+  '<div class="card"><h3>סיכון</h3><ul><li>סיכון של '+v("risk_per_trade_pct",1,"%")+' מהתיק לעסקה</li><li>פוזיציה עד '+v("max_position_pct",20,"%")+' מהתיק</li><li>עד '+v("max_open_positions",5)+' פוזיציות, עד '+v("max_per_sector",2)+' מאותו סקטור</li><li>סיכון פתוח כולל עד '+v("max_open_risk_pct",4,"%")+'</li><li>עד '+v("max_new_per_day",2)+' כניסות חדשות ביום</li><li>סטופ, יעד ותאריך יציאה נקבעים לפני הכניסה ולא זזים לרעה</li></ul></div>'+
+  '<div class="card"><h3>משטר שוק</h3><ul><li>ירוק: גודל מלא</li><li>צהוב: חצי גודל</li><li>אדום: אין כניסות חדשות</li><li>'+esc(S.latest&&S.latest.regime&&S.latest.regime.rule||"הכלל המדויק מופיע אחרי הריצה הראשונה.")+'</li></ul></div>'+
+  '<div class="card"><h3>בלמים</h3><ul><li>ירידה של '+v("dd_half_size_pct",10,"%")+' מהשיא: חצי גודל</li><li>ירידה של '+v("dd_pause_pct",15,"%")+': עוצרים כניסות עד בדיקה ידנית</li><li>אין כניסה 5 ימי מסחר לפני דוח רבעוני</li><li>אין כניסה אם המניה נפתחת מתחת לסטופ או יותר מ-ATR אחד מעל סגירת הייחוס</li></ul></div>'+
+  '<div class="card"><h3>מי מחליט מה</h3><ul><li>הסורק מביא טבלה, לא דעה</li><li>המתייג רשאי לתייג רק את חמשת הסטאפים שכאן</li><li>קורא החדשות ועוקב הכסף הגדול מביאים עובדות עם מקור</li><li>המפקפק חייב לכתוב למה העסקה תיכשל. וטו שלו על עובדה שלא הופרכה עוצר את העסקה</li><li>הבוס רוצה להגיד כן, אבל לא יכול לעקוף חוק, וטו פתוח או משטר אדום</li></ul></div>'+
+  '<div class="card"><h3>מעבר לכסף אמיתי</h3><ul><li>'+(g.min_weeks||8)+' שבועות ו-'+(g.min_closed_trades||20)+' עסקאות סגורות על הנייר</li><li>תוחלת של '+(g.min_expectancy_r||0.25)+'R לעסקה אחרי עמלות</li><li>ירידה מקסימלית עד '+(g.max_drawdown_pct||8)+'%, תשואה חיובית וגבוהה מ-SPY</li><li>שלב ראשון: '+usd(g.first_stage_usd||2500,0)+' ל-'+(g.first_stage_weeks||4)+' שבועות</li><li>ההחלטה תמיד של אלון. הצוות לא נוגע בכסף</li></ul></div></section>'+
+  '<section style="display:flex;flex-direction:column;gap:10px"><h2>חמשת הסטאפים</h2>'+(setups?'<div class="rules">'+setups+'</div>':'<div class="empty">הגדרות הסטאפים יופיעו אחרי ריצת המנוע הראשונה.</div>')+'</section>';
+}
+
+/* ---------- render ---------- */
+function render(){
+  renderMeta();
+  document.querySelectorAll("#tabs button").forEach(function(b){b.setAttribute("aria-selected",b.dataset.tab===S.tab)});
+  var v=$("view");
+  if(!S.ready){v.innerHTML='<div class="empty">טוען את נתוני הצוות…</div>';return}
+  if(!S.db){v.innerHTML='<div class="empty"><b>הנתונים לא זמינים בתצוגה הזו.</b><br>פתחו את הלוח מתוך Claude כשאתם מחוברים.</div>';return}
+  v.innerHTML=({today:viewToday,paper:viewPaper,evidence:viewEvidence,log:viewLog,rules:viewRules}[S.tab]||viewToday)();
+  if(S.tab==="paper"&&S.paper&&$("ch-paper")){var c=S.paper.curve||[];lineChart($("ch-paper"),c.map(function(x){return x.d}),[{name:"תיק הנייר",short:"Paper",color:"--s1",values:c.map(function(x){return x.eq})},{name:"SPY",short:"SPY",color:"--s2",values:c.map(function(x){return x.spy})}])}
+  if(S.tab==="evidence"&&S.bt&&$("ch-bt")){var b=S.bt.curve||[];lineChart($("ch-bt"),b.map(function(x){return x.d}),[{name:"התיק לפי החוקים",short:"Rules",color:"--s1",values:b.map(function(x){return x.eq})},{name:"SPY",short:"SPY",color:"--s2",values:b.map(function(x){return x.spy})},{name:"היקום, משקל שווה",short:"Univ",color:"--s3",values:b.map(function(x){return x.ew})}])}
+}
+document.addEventListener("click",function(e){
+  var t=e.target.closest("#tabs button");if(t){S.tab=t.dataset.tab;try{history.replaceState(null,"","#"+S.tab)}catch(_){}render();return}
+  if(e.target.closest("#more")){S.all=!S.all;render();return}
+  var st=e.target.closest(".st");if(st){S.station=st.dataset.st;render();return}
+  var cell=e.target.closest(".cell");if(cell){S.probe=Number(cell.dataset.i);var d=$("detail");if(d)d.innerHTML=detail();return}
+  var row=e.target.closest("tr.row");if(row){S.sel=row.dataset.t;S.probe=null;document.querySelectorAll("tr.row").forEach(function(r){r.setAttribute("aria-selected",r.dataset.t===S.sel)});var dd=$("detail");if(dd){dd.innerHTML=detail();dd.scrollIntoView({block:"nearest",behavior:"smooth"})}}
+});
+document.addEventListener("keydown",function(e){if(e.key==="Enter"&&e.target.matches&&e.target.matches("tr.row"))e.target.click()});
+var h0=(location.hash||"").replace("#","");if({today:1,paper:1,evidence:1,log:1,rules:1}[h0])S.tab=h0;
+render();
+function start(db){
+  S.ready=true;S.db=!!db;render();if(!db)return;
+  var sub=function(path,key){db.doc(path).onSnapshot(function(s){S[key]=s.exists?s.data():null;render()},function(){})};
+  sub("team/latest","latest");sub("paper/state","paper");sub("engine/backtest","bt");sub("engine/catalog","cat");
+  db.collection("runs").orderBy("date","desc").limit(60).onSnapshot(function(q){S.runs=q.docs.map(function(d){return d.data()});if(S.tab==="log")render()},function(){});
+}
+if(window.claude&&window.claude.use)window.claude.use("db").then(start,function(){start(null)});else start(null);
+})();
+</script>
