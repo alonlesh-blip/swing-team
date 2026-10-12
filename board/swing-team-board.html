@@ -196,7 +196,7 @@ details>summary{cursor:pointer;color:var(--accent);font-weight:600;font-size:13p
 <script>
 (function(){
 "use strict";
-var S={all:false,tab:"today",latest:null,paper:null,bt:null,cat:null,runs:null,sel:null,station:"boss",probe:null,db:false,ready:false};
+var S={all:false,tab:"today",latest:null,paper:null,bt:null,cat:null,runs:null,research:null,sel:null,station:"boss",probe:null,db:false,ready:false};
 var $=function(id){return document.getElementById(id)};
 function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
 function num(x,d){if(x==null||isNaN(x))return"–";return Number(x).toLocaleString("en-US",{minimumFractionDigits:d==null?2:d,maximumFractionDigits:d==null?2:d})}
@@ -355,12 +355,33 @@ function viewPaper(){
   if(cx)h+='<section class="card"><h2>הזמנות שלא בוצעו</h2><div class="loglist">'+cx+'</div></section>';
   return h;
 }
+/* ---------- research (version 2) ---------- */
+function viewResearch(){
+  var R=S.research;if(!R||!R.S)return"";
+  var ch=R.S.chosen||{},h="",cell=function(x){return x?'<td>'+rr(x.avg)+'</td><td class="n">'+num(x.t_days,2)+'</td><td>'+pct(x.ret)+'</td><td>'+pct(x.maxdd)+'</td>':'<td>–</td><td>–</td><td>–</td><td>–</td>'};
+  h+='<section class="card" style="display:flex;flex-direction:column;gap:12px"><div><div class="who">גרסה 2 · '+dateHe(R.date)+'</div><div class="head" style="font-family:var(--display);font-weight:700;font-size:24px;line-height:1.2;margin-block:2px 6px">'+esc(R.headline)+'</div><p class="sub">'+esc(R.summary)+'</p></div>'+
+    '<div class="tiles">'+(R.splits||[]).map(function(x){return tile(esc(x.name),'<span style="font-size:13px">'+String(x.from).slice(2)+" → "+String(x.to).slice(2)+'</span>',esc(x.use))}).join("")+'</div>'+
+    '<div class="two"><div style="display:flex;flex-direction:column;gap:6px;min-width:0"><h3>המבחן: תנאים שנקבעו מראש</h3><p class="sub">'+esc(ch.name||"")+'. '+esc(ch.why||"")+'</p><div class="crit">'+(ch.criteria||[]).map(function(c){return'<div><span class="sym '+(c.ok?"up":"dn")+'">'+(c.ok?"✓":"✕")+'</span><span>'+esc(c.name)+'</span><span class="n">'+num(c.value,Number.isInteger(c.value)?0:(Math.abs(c.value)<2?2:1))+'</span></div>'}).join("")+'</div></div>'+
+    '<div style="display:flex;flex-direction:column;gap:6px;min-width:0"><h3>מה למדנו</h3><ul style="margin:0;padding-inline-start:18px;color:var(--ink2);font-size:13.5px">'+(R.lessons||[]).map(function(l){return'<li style="margin-bottom:4px">'+esc(l)+'</li>'}).join("")+'</ul></div></div>';
+  var rows=(ch.rows||[]).map(function(x){return'<tr'+(x.primary?' style="font-weight:600"':"")+'><td style="white-space:normal;min-width:170px">'+esc(x.label)+'</td>'+cell(x.train)+cell(x.valid)+cell(x.test)+'</tr>'}).join("");
+  var sub4='<th>תוחלת</th><th>t יומי</th><th>תיק</th><th>ירידה</th>';
+  h+='<div style="display:flex;flex-direction:column;gap:6px"><h3>הווריאציה שנבחרה, בשלוש התקופות</h3><div class="tbl"><table><thead><tr><th></th><th colspan="4">אימון</th><th colspan="4">תיקוף</th><th colspan="4">מבחן</th></tr><tr><th></th>'+sub4+sub4+sub4+'</tr></thead><tbody>'+rows+'</tbody></table></div>'+
+    '<p class="mut">SPY בתקופת המבחן: '+pct(ch.rows&&ch.rows[0]&&ch.rows[0].test.spy)+', ירידה מקסימלית '+pct(ch.rows&&ch.rows[0]&&ch.rows[0].test.spy_maxdd)+'. "תיק" הוא סימולציה לפי ספר החוקים על 10,000 דולר.</p></div>';
+  var st=function(x){return'<td class="n">'+num(x.n,0)+'</td><td>'+rr(x.avg)+'</td>'};
+  var bl=(R.S.baseline||[]).map(function(x){return'<tr><td>'+esc(x.name)+'</td><td class="mut">בלי מסנן</td>'+st(x.train)+st(x.valid)+'</tr>'}).join("")+(R.S.filtered||[]).map(function(x){return'<tr><td>'+esc(x.name)+'</td><td class="mut">מסנן נלמד · '+esc(x.exit)+'</td>'+st(x.train)+st(x.valid)+'</tr>'}).join("");
+  var rr_=(R.R.rows||[]).map(function(x){return'<tr><td class="n">'+x.H+'</td><td class="n">'+x.N+'</td><td class="n">'+num(x.tmin,1)+'</td><td>'+pct(x.train.ret)+'</td><td>'+pct(x.train.spy)+'</td><td>'+pct(x.train.maxdd)+'</td><td>'+pct(x.valid.ret)+'</td><td>'+pct(x.valid.spy)+'</td><td>'+pct(x.valid.maxdd)+'</td></tr>'}).join("");
+  h+='<details><summary>משפחה S: הסטאפים עם ובלי מסנן נלמד, בעמלת IBI ('+num(R.S.configs_tested,0)+' וריאציות)</summary><p class="sub" style="margin:8px 0">'+esc(R.S.verdict)+' המסנן נלמד על האימון ולכן נראה שם טוב. מה שקובע הוא התיקוף.</p><div class="tbl"><table><thead><tr><th>סטאפ</th><th></th><th>אימון: איתותים</th><th>אימון: תוחלת</th><th>תיקוף: איתותים</th><th>תיקוף: תוחלת</th></tr></thead><tbody>'+bl+'</tbody></table></div></details>'+
+    '<details><summary>משפחה R: דירוג לפי הבודקים (8 וריאציות)</summary><p class="sub" style="margin:8px 0">'+esc(R.R.verdict)+'</p><div class="tbl"><table><thead><tr><th>ימים בין דירוגים</th><th>מניות</th><th>סף t</th><th>אימון</th><th>SPY</th><th>ירידה</th><th>תיקוף</th><th>SPY</th><th>ירידה</th></tr></thead><tbody>'+rr_+'</tbody></table></div></details>'+
+    '<p class="mut">'+(R.caveats||[]).map(esc).join(" ")+' התוכנית נכתבה ונדחפה לריפו לפני המבחן: <a href="'+esc(/^https:\/\//.test(R.plan_url||"")?R.plan_url:"#")+'" target="_blank" rel="noopener">RESEARCH.md</a></p></section>';
+  return h;
+}
 /* ---------- evidence ---------- */
 function statRow(name,s,extra){s=s||{};return'<tr><td>'+name+'</td><td class="n">'+num(s.n,0)+'</td><td class="n">'+(s.win_rate==null?"–":num(s.win_rate,0)+"%")+'</td><td>'+rr(s.avg_r)+'</td><td class="n">'+(s.profit_factor==null?"–":num(s.profit_factor,2))+'</td><td class="n">'+(s.t_stat==null?"–":num(s.t_stat,1))+'</td>'+(extra||"")+'</tr>'}
 function viewEvidence(){
   var B=S.bt;
   if(!B||!B.portfolio)return'<div class="empty"><b>הבדיקה ההיסטורית עוד לא רצה.</b><br>אחרי ריצת המנוע הראשונה יופיע כאן מה כל סטאפ וכל אחד מ-300 הבודקים עשה בשנים האחרונות.</div>';
-  var p=B.portfolio,pf=B.portfolio_by_fee||{},fees=B.fee_scenarios||[],h="";
+  var p=B.portfolio,pf=B.portfolio_by_fee||{},fees=B.fee_scenarios||[],h=viewResearch();
+  if(h)h+='<h2 style="margin-top:6px">גרסה 1: הבדיקה על כל התקופה</h2>';
   h+='<div class="note"><b>איך לקרוא את זה.</b> זו בדיקה על העבר, מ-'+dateHe(B.from)+' עד '+dateHe(B.to)+', ולא הבטחה. '+(B.caveats||[]).map(esc).join(" ")+'</div>';
   h+='<section class="two"><div class="card"><h2>סימולציית התיק לפי ספר החוקים</h2><p class="sub" style="margin-bottom:8px">אותם חוקים, אותו כיס של 10,000 דולר, עמלה של '+usd(B.commission_usd,2)+' לפעולה.</p><div id="ch-bt"></div></div>'+
     '<div class="card" style="display:flex;flex-direction:column;gap:10px"><h2>השורה התחתונה</h2><div class="tiles">'+tile("התיק",(p.return_pct>0?"+":"")+num(p.return_pct,1)+"%",num(p.years,1)+" שנים")+tile("SPY",(p.spy_return_pct>0?"+":"")+num(p.spy_return_pct,1)+"%","קנה והחזק")+
@@ -433,7 +454,7 @@ render();
 function start(db){
   S.ready=true;S.db=!!db;render();if(!db)return;
   var sub=function(path,key){db.doc(path).onSnapshot(function(s){S[key]=s.exists?s.data():null;render()},function(){})};
-  sub("team/latest","latest");sub("paper/state","paper");sub("engine/backtest","bt");sub("engine/catalog","cat");
+  sub("team/latest","latest");sub("paper/state","paper");sub("engine/backtest","bt");sub("engine/catalog","cat");sub("engine/research","research");
   db.collection("runs").orderBy("date","desc").limit(60).onSnapshot(function(q){S.runs=q.docs.map(function(d){return d.data()});if(S.tab==="log")render()},function(){});
 }
 if(window.claude&&window.claude.use)window.claude.use("db").then(start,function(){start(null)});else start(null);
