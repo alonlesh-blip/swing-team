@@ -4,6 +4,12 @@ name: research-data
 # research can run offline. The branch is deleted after it has been downloaded.
 on:
   workflow_dispatch:
+    inputs:
+      mode:
+        description: "publish = push a fresh snapshot, delete = remove the temporary branch"
+        default: publish
+        type: choice
+        options: [publish, delete]
 
 permissions:
   contents: write
@@ -14,13 +20,20 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+      - name: Delete the temporary branch
+        if: inputs.mode == 'delete'
+        run: git push origin --delete research-data
       - uses: actions/setup-python@v5
+        if: inputs.mode != 'delete'
         with:
           python-version: "3.12"
           cache: pip
-      - run: pip install -r requirements.txt
-      - run: python -m engine.dump_data bars.npz
+      - if: inputs.mode != 'delete'
+        run: pip install -r requirements.txt
+      - if: inputs.mode != 'delete'
+        run: python -m engine.dump_data bars.npz
       - name: Push snapshot to a temporary branch
+        if: inputs.mode != 'delete'
         run: |
           mkdir pub && mv bars.npz pub/ && cd pub
           git init -q && git checkout -q -b research-data
