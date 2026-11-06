@@ -168,8 +168,7 @@ def finish(d):
             why = "אין סטאפ היום, רק מעקב"
         elif r["setups"][0] in sus:
             why = "הסטאפ מושעה: " + sus[r["setups"][0]]
-        elif r["score"] < cfg["min_score"]:
-            why = f"ציון {r['score']} מתחת לסף {cfg['min_score']}"
+        # 6.11.2026, Alon's decision: a score under min_score is information for the boss, not a hard stop.
         elif t in blocked:
             why = "קורא החדשות פסל"
         elif t in vetoed:
